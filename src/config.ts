@@ -24,8 +24,8 @@ import { LinkPreset } from "./types/config";
 const SITE_LANG = "zh_CN"; // 语言代码，例如：'en', 'zh_CN', 'ja' 等。
 const SITE_TIMEZONE = 8; //设置你的网站时区 from -12 to 12 default in UTC+8
 export const siteConfig: SiteConfig = {
-	title: "Mizuki",
-	subtitle: "One demo website",
+	title: "WYZの拾忆录",
+	subtitle: "",
 	siteURL: "https://mizuki.mysqil.com/", // 请替换为你的站点URL，以斜杠结尾
 	siteStartDate: "2026-05-20", // 站点开始运行日期，用于站点统计组件计算运行天数
 
@@ -195,12 +195,14 @@ export const siteConfig: SiteConfig = {
 	showCoverInContent: true, // 在文章内容页显示文章封面
 	generateOgImages: false, // 启用生成OpenGraph图片功能,注意开启后要渲染很长时间，不建议本地调试的时候开启
 	favicon: [
-		// 留空以使用默认 favicon
-		// {
-		//   src: '/favicon/icon.png',    // 图标文件路径
-		//   theme: 'light',              // 可选，指定主题 'light' | 'dark'
-		//   sizes: '32x32',              // 可选，图标大小
-		// }
+		{
+			src: "/assets/home/favicon-16.png",
+			sizes: "16x16",
+		},
+		{
+			src: "/assets/home/favicon-32.png",
+			sizes: "32x32",
+		},
 	],
 
 	// 字体配置
@@ -262,7 +264,7 @@ export const navBarConfig: NavBarConfig = {
 			children: [
 				{
 					name: "GitHub",
-					url: "https://github.com/Pluto-52",
+					url: "https://github.com/WYZ-62",
 					external: true,
 					icon: "fa7-brands:github",
 				},
@@ -372,7 +374,7 @@ export const profileConfig: ProfileConfig = {
 		{
 			name: "GitHub",
 			icon: "fa7-brands:github",
-			url: "https://github.com/Pluto-52",
+			url: "https://github.com/WYZ-62",
 		},
 		{
 			name: "Codeberg",
