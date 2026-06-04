@@ -67,7 +67,7 @@ const style = Astro.props.style;
 	</div>
 </WidgetLayout>
 
-<script define:vars={{ isClosable: config.closable ?? false }}>
+<script is:inline define:vars={{ isClosable: config.closable ?? false }}>
 	function closeAnnouncement() {
 		if (!isClosable) {
 			return;
@@ -79,8 +79,10 @@ const style = Astro.props.style;
 		);
 		if (widgetLayouts.length > 0) {
 			widgetLayouts.forEach((widget) => {
-				// 隐藏整个widget-layout元素
-				(widget as HTMLElement).style.display = "none";
+				// 这里是内联浏览器脚本，使用原生 JS 判断避免 TS 断言报错
+				if (widget instanceof HTMLElement) {
+					widget.style.display = "none";
+				}
 			});
 			// 保存关闭状态到localStorage
 			localStorage.setItem("announcementClosed", "true");
@@ -96,7 +98,9 @@ const style = Astro.props.style;
 		if (!isClosable) {
 			localStorage.removeItem("announcementClosed");
 			widgetLayouts.forEach((widget) => {
-				(widget as HTMLElement).style.display = "";
+				if (widget instanceof HTMLElement) {
+					widget.style.display = "";
+				}
 			});
 			return;
 		}
@@ -106,7 +110,9 @@ const style = Astro.props.style;
 			localStorage.getItem("announcementClosed") === "true"
 		) {
 			widgetLayouts.forEach((widget) => {
-				(widget as HTMLElement).style.display = "none";
+				if (widget instanceof HTMLElement) {
+					widget.style.display = "none";
+				}
 			});
 		}
 	});
