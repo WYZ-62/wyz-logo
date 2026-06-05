@@ -25,7 +25,7 @@ import {
 	hasCustomPermalink,
 	initPostIdMap,
 } from "@utils/permalink-utils";
-import { getFileDirFromPath } from "@utils/url-utils";
+import { getFileDirFromPath, getPostUrl } from "@utils/url-utils";
 import type { CollectionEntry } from "astro:content";
 import { render } from "astro:content";
 import { Icon } from "astro-icon/components";
@@ -198,7 +198,7 @@ const jsonLd = {
 					updated={entry.data.updated}
 					tags={entry.data.tags}
 					category={entry.data.category || undefined}
-					id={entry.id}
+					pagePath={getPostUrl(entry)}
 				/>
 				{
 					(!entry.data.image ||

@@ -123,7 +123,7 @@
 
 			{#each group.posts as post}
 				<a
-					href={post.url || `/posts/${post.id}/`}
+					href={post.url ?? "#"}
 					aria-label={post.data.title}
 					class="group btn-plain !block h-10 w-full rounded-lg hover:text-[initial]"
 				>
