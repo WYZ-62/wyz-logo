@@ -16,6 +16,9 @@ declare global {
 			on: (event: string, handler: (...args: unknown[]) => void) => void;
 			off: (event: string, handler: (...args: unknown[]) => void) => void;
 		};
+		cache?: {
+			clear: () => void;
+		};
 		navigate?: (url: string, options?: { history?: boolean }) => void;
 		preload?: (url: string) => Promise<void>;
 	}

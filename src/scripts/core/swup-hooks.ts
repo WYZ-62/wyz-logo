@@ -163,6 +163,12 @@ export class SwupHooksManager {
 
 			// 触发页面加载完成事件
 			this.dispatchPageLoadedEvent();
+
+			// 某些新上线页面如果在切换前被访问过，swup 可能还保留旧的 404 缓存。
+			// 当当前页面就是 404 时，清空内存缓存，确保下一次访问会重新请求服务端。
+			if (document.querySelector('[data-page-type="not-found"]')) {
+				window.swup?.cache?.clear();
+			}
 		});
 	}
 
