@@ -34,10 +34,8 @@ jobs:
       - name: Build site
         run: pnpm run build
         env:
-          # 如果需要启用内容分离,取消以下注释并配置
-          # ENABLE_CONTENT_SYNC: true
-          # CONTENT_REPO_URL: ${{ secrets.CONTENT_REPO_URL }}
-          # USE_SUBMODULE: true
+          # 手动部署到 pages 分支时默认关闭内容同步,避免缺少私有仓库配置导致构建失败
+          ENABLE_CONTENT_SYNC: false
       
       - name: Deploy to pages branch
         uses: JamesIves/github-pages-deploy-action@v4
