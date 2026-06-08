@@ -1,0 +1,44 @@
+---
+import ButtonLink from "@components/control/ButtonLink.astro";
+import { PageHeader } from "@components/features/page-header";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getCategoryList } from "@utils/content-utils";
+
+const categories = await getCategoryList();
+const title = "分类";
+const subtitle = "按分类浏览文章内容";
+---
+
+<MainGridLayout title={title} description={subtitle}>
+	<script>
+		import("../scripts/right-sidebar-layout.js");
+	</script>
+
+	<div
+		class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32"
+	>
+		<div class="card-base z-10 px-6 sm:px-9 py-6 relative w-full">
+			<PageHeader title={title} subtitle={subtitle} />
+
+			{
+				categories.length > 0 ? (
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+						{categories.map((category) => (
+							<ButtonLink
+								url={category.url}
+								badge={String(category.count)}
+								label={`查看 ${category.name} 分类下的全部文章`}
+							>
+								{category.name}
+							</ButtonLink>
+						))}
+					</div>
+				) : (
+					<p class="text-black/50 dark:text-white/50">
+						当前还没有可展示的分类。
+					</p>
+				)
+			}
+		</div>
+	</div>
+</MainGridLayout>

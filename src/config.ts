@@ -34,7 +34,7 @@ export const siteConfig: SiteConfig = {
 	lang: SITE_LANG,
 
 	themeColor: {
-		hue: 240, // 主题色的默认色相，范围从 0 到 360。例如：红色：0，青色：200，蓝绿色：250，粉色：345
+		hue: 205, // 主题色的默认色相，范围从 0 到 360。例如：红色：0，天蓝：205，青色：200，粉色：345
 		fixed: false, // 对访问者隐藏主题色选择器
 	},
 
@@ -56,8 +56,8 @@ export const siteConfig: SiteConfig = {
 		mode: "logo",
 		// 顶栏标题文本
 		text: "WYZ",
-		// 顶栏标题图标路径，默认使用 public/assets/home/home.webp
-		icon: "assets/home/home.webp",
+		// 顶栏标题图标路径
+		icon: "assets/home/title.png",
 		// 网站Logo图片路径
 		logo: "assets/home/wyz-logo.webp",
 	},
@@ -196,12 +196,7 @@ export const siteConfig: SiteConfig = {
 	generateOgImages: false, // 启用生成OpenGraph图片功能,注意开启后要渲染很长时间，不建议本地调试的时候开启
 	favicon: [
 		{
-			src: "/assets/home/favicon-16.png",
-			sizes: "16x16",
-		},
-		{
-			src: "/assets/home/favicon-32.png",
-			sizes: "32x32",
+			src: "/assets/home/title.png",
 		},
 	],
 
@@ -283,30 +278,29 @@ export const navBarConfig: NavBarConfig = {
 			],
 		},
 		{
-			name: "My",
-			url: "/content/",
-			icon: "material-symbols:person",
+			name: "标签",
+			url: "#",
+			icon: "material-symbols:tag",
 			children: [
 				{
-					name: "Anime",
-					url: "/anime/",
-					icon: "material-symbols:movie",
+					name: "分类",
+					url: "/categories/",
+					icon: "material-symbols:folder-outline",
 				},
 				{
-					name: "Diary",
+					name: "专题",
+					url: "/topics/",
+					icon: "material-symbols:bookmarks-outline",
+				},
+				{
+					name: "日记",
 					url: "/diary/",
-					icon: "material-symbols:book",
+					icon: "material-symbols:book-outline",
 				},
 				{
-					name: "Gallery",
+					name: "相册",
 					url: "/albums/",
 					icon: "material-symbols:photo-library",
-				},
-				{
-					name: "Devices",
-					url: "/devices/",
-					icon: "material-symbols:devices",
-					external: false,
 				},
 			],
 		},
@@ -634,8 +628,8 @@ export const sakuraConfig: SakuraConfig = {
 		max: 1.1, // 樱花最大尺寸倍数
 	},
 	opacity: {
-		min: 0.3, // 樱花最小不透明度
-		max: 0.9, // 樱花最大不透明度
+		min: 0.52, // 樱花最小不透明度
+		max: 0.96, // 樱花最大不透明度
 	},
 	speed: {
 		horizontal: {

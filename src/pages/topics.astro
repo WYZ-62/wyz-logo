@@ -1,0 +1,190 @@
+---
+import { PageHeader } from "@components/features/page-header";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+
+import { buildTopics } from "../data/topics";
+import { getSortedPostsList } from "../utils/content-utils";
+import { url } from "../utils/url-utils";
+
+const title = "专题";
+const topics = buildTopics(await getSortedPostsList());
+const subtitle = `共 ${topics.length} 个专题，点击后可查看专题下的完整文章。`;
+---
+
+<MainGridLayout title={title} description={subtitle}>
+	<script>
+		import("../scripts/right-sidebar-layout.js");
+	</script>
+
+	<div
+		class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32"
+	>
+		<div class="card-base z-10 px-6 sm:px-9 py-6 relative w-full">
+			<PageHeader title={title} subtitle={subtitle} />
+
+			<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+				{
+					topics.map((topic) => (
+						<a href={url(`/topics/${topic.id}/`)} class="topic-card group">
+							<div class="topic-cover-wrap">
+								<img
+									src={topic.cover}
+									alt={topic.title}
+									class="topic-cover"
+									loading="lazy"
+									decoding="async"
+								/>
+								<div class="topic-cover-overlay" />
+								<div class="topic-count-pill">
+									{topic.posts.length} 篇文章
+								</div>
+								<div class="topic-cover-footer">
+									<h2 class="topic-cover-title">{topic.title}</h2>
+									<div class="topic-arrow-badge">
+										<Icon
+											name="material-symbols:chevron-right-rounded"
+											class="text-[1.65rem]"
+										/>
+									</div>
+								</div>
+							</div>
+
+							<div class="topic-body">
+								<p class="topic-desc">{topic.description}</p>
+							</div>
+						</a>
+					))
+				}
+			</div>
+		</div>
+	</div>
+</MainGridLayout>
+
+<style>
+	.topic-card {
+		display: block;
+		overflow: hidden;
+		border-radius: 1.5rem;
+		background: color-mix(in srgb, var(--card-bg) 94%, white 6%);
+		border: 1px solid color-mix(in srgb, var(--line-divider) 86%, transparent);
+		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.05);
+		transition:
+			transform 0.25s ease,
+			box-shadow 0.25s ease,
+			border-color 0.25s ease;
+	}
+
+	.topic-card:hover {
+		transform: translateY(-4px);
+		border-color: color-mix(in srgb, var(--primary) 40%, var(--line-divider));
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+	}
+
+	.topic-cover-wrap {
+		position: relative;
+		aspect-ratio: 16 / 9;
+		overflow: hidden;
+	}
+
+	.topic-cover {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: transform 0.5s ease;
+	}
+
+	.topic-card:hover .topic-cover {
+		transform: scale(1.04);
+	}
+
+	.topic-cover-overlay {
+		position: absolute;
+		inset: 0;
+		background:
+			linear-gradient(to top, rgba(12, 16, 28, 0.82) 0%, rgba(12, 16, 28, 0.2) 45%, rgba(12, 16, 28, 0.04) 100%);
+	}
+
+	.topic-count-pill {
+		position: absolute;
+		top: 1rem;
+		left: 1rem;
+		padding: 0.38rem 0.8rem;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.88);
+		color: rgba(0, 0, 0, 0.72);
+		font-size: 0.9rem;
+		font-weight: 700;
+		backdrop-filter: blur(10px);
+	}
+
+	.topic-cover-footer {
+		position: absolute;
+		left: 1.2rem;
+		right: 1.2rem;
+		bottom: 1rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.topic-cover-title {
+		font-size: clamp(1.6rem, 3vw, 2.15rem);
+		font-weight: 800;
+		line-height: 1.1;
+		color: white;
+		text-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+	}
+
+	.topic-arrow-badge {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 3.6rem;
+		height: 3.6rem;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.92);
+		color: var(--primary);
+		flex-shrink: 0;
+		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+		transition: transform 0.2s ease;
+	}
+
+	.topic-card:hover .topic-arrow-badge {
+		transform: translateX(2px);
+	}
+
+	.topic-body {
+		padding: 1.2rem 1.35rem 1.45rem;
+	}
+
+	.topic-desc {
+		font-size: 1rem;
+		line-height: 1.8;
+		color: color-mix(in srgb, var(--deep-text) 66%, transparent);
+	}
+
+	:global(.dark) .topic-card {
+		box-shadow: none;
+	}
+
+	@media (max-width: 768px) {
+		.topic-card {
+			border-radius: 1.25rem;
+		}
+
+		.topic-count-pill {
+			font-size: 0.82rem;
+		}
+
+		.topic-arrow-badge {
+			width: 3rem;
+			height: 3rem;
+		}
+
+		.topic-body {
+			padding: 1rem 1.1rem 1.2rem;
+		}
+	}
+</style>

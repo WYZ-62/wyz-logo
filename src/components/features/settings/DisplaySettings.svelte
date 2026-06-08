@@ -9,8 +9,8 @@
 
 	export let className = "";
 
-	let hue = 250;
-	let defaultHue = 250;
+	let hue = 205;
+	let defaultHue = 205;
 	let isMounted = false;
 
 	function resetHue() {

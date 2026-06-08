@@ -1,0 +1,162 @@
+---
+import PostListItem from "@components/features/posts/PostListItem.astro";
+import { PageHeader } from "@components/features/page-header";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+
+import { buildTopics } from "../../data/topics";
+import { getSortedPostsList } from "../../utils/content-utils";
+import { url } from "../../utils/url-utils";
+
+export async function getStaticPaths() {
+	const topics = buildTopics(await getSortedPostsList());
+	return topics.map((topic) => ({
+		params: { id: topic.id },
+		props: { topic },
+	}));
+}
+
+const { topic } = Astro.props;
+
+if (!topic) {
+	return Astro.redirect("/404/");
+}
+---
+
+<MainGridLayout title={topic.title} description={topic.description}>
+	<script>
+		import("../../scripts/right-sidebar-layout.js");
+	</script>
+
+	<div
+		class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32"
+	>
+		<div class="card-base z-10 px-6 sm:px-9 py-6 relative w-full">
+			<div class="topic-hero">
+				<img
+					src={topic.cover}
+					alt={topic.title}
+					class="topic-hero-cover"
+					loading="lazy"
+					decoding="async"
+				/>
+				<div class="topic-hero-overlay" />
+				<div class="topic-hero-content">
+					<a href={url("/topics/")} class="topic-back-link">
+						<Icon
+							name="material-symbols:arrow-back-rounded"
+							class="text-[1.05rem]"
+						/>
+						<span>返回专题</span>
+					</a>
+					<div class="topic-hero-meta">{topic.posts.length} 篇文章</div>
+					<h1 class="topic-hero-title">{topic.title}</h1>
+					<p class="topic-hero-desc">{topic.description}</p>
+				</div>
+			</div>
+
+			<div class="mt-8">
+				<PageHeader
+					title="文章列表"
+					subtitle={`这里收录了「${topic.title}」专题下的全部文章`}
+				/>
+				<div class="divide-y divide-black/5 dark:divide-white/5">
+					{
+						topic.posts.map((post, index) => (
+							<PostListItem post={post} index={index} />
+						))
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+</MainGridLayout>
+
+<style>
+	.topic-hero {
+		position: relative;
+		overflow: hidden;
+		border-radius: 1.5rem;
+		min-height: 20rem;
+	}
+
+	.topic-hero-cover {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.topic-hero-overlay {
+		position: absolute;
+		inset: 0;
+		background:
+			linear-gradient(135deg, rgba(14, 20, 34, 0.78) 0%, rgba(14, 20, 34, 0.42) 45%, rgba(14, 20, 34, 0.18) 100%);
+	}
+
+	.topic-hero-content {
+		position: relative;
+		z-index: 1;
+		padding: 1.35rem 1.4rem 1.6rem;
+		color: white;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		min-height: 20rem;
+	}
+
+	.topic-back-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.45rem 0.8rem;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.16);
+		backdrop-filter: blur(8px);
+		width: fit-content;
+		margin-bottom: auto;
+		font-size: 0.92rem;
+		font-weight: 600;
+	}
+
+	.topic-hero-meta {
+		display: inline-flex;
+		width: fit-content;
+		margin-top: 1.5rem;
+		padding: 0.42rem 0.85rem;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.9);
+		color: rgba(0, 0, 0, 0.72);
+		font-size: 0.92rem;
+		font-weight: 700;
+	}
+
+	.topic-hero-title {
+		margin-top: 0.9rem;
+		font-size: clamp(2rem, 4vw, 3rem);
+		font-weight: 800;
+		line-height: 1.1;
+		text-shadow: 0 5px 18px rgba(0, 0, 0, 0.28);
+	}
+
+	.topic-hero-desc {
+		margin-top: 0.75rem;
+		max-width: 42rem;
+		font-size: 1rem;
+		line-height: 1.85;
+		color: rgba(255, 255, 255, 0.88);
+	}
+
+	@media (max-width: 768px) {
+		.topic-hero {
+			min-height: 17rem;
+			border-radius: 1.25rem;
+		}
+
+		.topic-hero-content {
+			min-height: 17rem;
+			padding: 1rem;
+		}
+	}
+</style>
