@@ -1,5 +1,5 @@
 ---
-title: 我是怎么和 AI 一起把博客部署到 EdgeOne Pages 的
+title: 如何使用EdgeOne Pages部署博客网站
 published: 2026-06-05
 updated: 2026-06-06
 pinned: true
@@ -12,7 +12,7 @@ draft: false
 sourceLink: "https://ynga.kingcola-icg.cn/posts/edgeone-pages-deploy/"
 ---
 
-# 我是怎么和 AI 一起把博客部署到 EdgeOne Pages 的
+# 我是怎么把博客部署到 EdgeOne Pages 的
 
 这篇文章既是一份部署记录，也是一份完整的排坑笔记。
 

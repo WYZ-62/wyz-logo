@@ -2,8 +2,6 @@
 title: Ubuntu 多人协作权限管理最佳实践
 published: 2026-06-06
 updated: 2026-06-07
-pinned: true
-priority: -1
 description: 以 5 人团队为例，梳理 Ubuntu 服务器中的账号设计、权限分层、目录授权、sudo 控制、SSH 登录与日常审计的推荐做法。
 tags: [Ubuntu, Linux, Role]
 category: 运维
@@ -304,7 +302,7 @@ Group=myapp
 
 比如 `carol` 和 `dave` 只需要重启某个服务、查看某个服务状态、看日志，就没有必要进 `sudo` 组。你可以用 `/etc/sudoers.d/` 做精确授权：
 
-```sudoers
+```ini
 alice ALL=(ALL:ALL) ALL
 bob   ALL=(ALL:ALL) ALL
 
@@ -536,7 +534,7 @@ sudo visudo -f /etc/sudoers.d/myapp-team
 
 写入：
 
-```sudoers
+```ini
 alice ALL=(ALL:ALL) ALL
 bob   ALL=(ALL:ALL) ALL
 

@@ -1,3 +1,5 @@
+import { openExternalLinkConfirm } from "../scripts/handlers/external-link-handler";
+
 /**
  * 导航工具函数
  * 提供统一的页面导航功能，支持 Swup 无刷新跳转
@@ -27,7 +29,7 @@ export function navigateToPage(
 		url.startsWith("https://") ||
 		url.startsWith("//")
 	) {
-		window.open(url, "_blank");
+		openExternalLinkConfirm(url, "_blank");
 		return;
 	}
 

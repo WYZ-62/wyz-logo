@@ -8,7 +8,6 @@ tags: [Mizuki, Markdown]
 category: 指南
 author: WYZ
 draft: false
-pinned: true
 ---
 
 # Muzuki使用指南

@@ -35,6 +35,17 @@ export const zh_CN: Translation = {
 	[Key.friendsCopyLink]: "复制链接",
 	[Key.friendsCopySuccess]: "已复制",
 	[Key.friendsTags]: "标签",
+	[Key.externalLinkBadge]: "外部链接",
+	[Key.externalLinkTitle]: "即将打开外部网站",
+	[Key.externalLinkDescription]:
+		"你当前仍停留在本站。确认后将前往目标外链，请自行判断目标站点内容与访问风险。",
+	[Key.externalLinkTarget]: "目标站点",
+	[Key.externalLinkTipContent]:
+		"外部站点内容与可用性不受本站控制，请自行甄别。",
+	[Key.externalLinkTipSecurity]:
+		"如涉及登录、下载或授权操作，请留意账号与隐私安全。",
+	[Key.externalLinkCancel]: "取消",
+	[Key.externalLinkContinue]: "继续跳转",
 	[Key.untitled]: "无标题",
 	[Key.uncategorized]: "未分类",
 	[Key.noTags]: "无标签",

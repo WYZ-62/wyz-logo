@@ -6,10 +6,11 @@ import Markdown from "@components/misc/Markdown.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getEntry, render } from "astro:content";
 
-import { siteConfig } from "../config";
+import { profileConfig, siteConfig } from "../config";
 import { getShuffledFriendsList } from "../data/friends";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
+import { url } from "../utils/url-utils";
 
 export const prerender = true;
 
@@ -26,6 +27,107 @@ if (!friendsPost) {
 const { Content } = await render(friendsPost);
 const friendsList = getShuffledFriendsList();
 const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
+const hasFriendsContent = (friendsPost.body ?? "").trim().length > 0;
+
+const siteBaseUrl = siteConfig.siteURL.endsWith("/")
+	? siteConfig.siteURL
+	: `${siteConfig.siteURL}/`;
+const rssUrl = new URL("rss.xml", siteBaseUrl).toString();
+const preferredSiteIcon = "/assets/home/title.png";
+
+const rawSiteIcon =
+	preferredSiteIcon ||
+	siteConfig.navbarTitle?.icon ||
+	siteConfig.navbarTitle?.logo ||
+	profileConfig.avatar ||
+	"";
+const avatarDisplaySrc = rawSiteIcon
+	? /^(?:https?:)?\/\//.test(rawSiteIcon) || rawSiteIcon.startsWith("data:")
+		? rawSiteIcon
+		: url(rawSiteIcon.startsWith("/") ? rawSiteIcon : `/${rawSiteIcon}`)
+	: "";
+const avatarAbsoluteUrl = rawSiteIcon
+	? new URL(
+			/^(?:https?:)?\/\//.test(rawSiteIcon) || rawSiteIcon.startsWith("data:")
+				? rawSiteIcon
+				: rawSiteIcon.startsWith("/")
+					? rawSiteIcon
+					: `/${rawSiteIcon}`,
+			siteBaseUrl,
+		).toString()
+	: "";
+
+const siteInfoItems = [
+	{
+		label: "站点名称",
+		value: siteConfig.title,
+	},
+	{
+		label: "站点描述",
+		value: profileConfig.bio,
+	},
+	{
+		label: "站点链接",
+		value: siteBaseUrl,
+	},
+	{
+		label: "头像链接",
+		value: avatarAbsoluteUrl,
+	},
+	{
+		label: "RSS 地址",
+		value: rssUrl,
+	},
+];
+
+const applySteps = [
+	{
+		title: "先添加本站信息",
+		description:
+			"建议先把左侧的本站信息添加到你的友链页，确认展示正常后再提交申请，这样我回访时也能更快核对资料。",
+	},
+	{
+		title: "提交申请信息",
+		description:
+			"目前可以直接在本页底部评论区留言申请，按下方格式提交站点名称、简介、首页链接和头像链接即可。",
+	},
+	{
+		title: "等待回访与审核",
+		description:
+			"我会优先收录长期更新、内容真实、访问稳定、风格真诚的个人博客或记录型站点，确认信息无误后会尽快添加。",
+	},
+];
+
+const applicationTemplate = [
+	"站点名称：你的站点名称",
+	"站点描述：一句简短的站点介绍",
+	"站点链接：https://example.com/",
+	"头像链接：https://example.com/avatar.png",
+	"RSS 地址：https://example.com/rss.xml（可选）",
+].join("\n");
+
+const noticeItems = [
+	{
+		title: "互换原则",
+		description:
+			"建议优先考虑已经将本站加入友链的站点，确认展示正常后再提交申请。",
+	},
+	{
+		title: "内容偏好",
+		description:
+			"更欢迎原创内容为主、持续更新、有个人表达与记录价值的博客或小站。",
+	},
+	{
+		title: "站点要求",
+		description:
+			"建议支持 HTTPS，页面可正常访问，头像、描述、站点名称尽量完整准确。",
+	},
+	{
+		title: "链接维护",
+		description:
+			"若站点长期无法访问、内容失效明显或停止维护，后续可能会整理或移除。",
+	},
+];
 ---
 
 <MainGridLayout
@@ -97,7 +199,7 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
 			<!-- 友链卡片网格 -->
 			<div
 				id="friends-grid"
-				class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-6"
+				class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6"
 			>
 				{friendsList.map((item) => <FriendCard friend={item} />)}
 			</div>
@@ -122,10 +224,197 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
 				</p>
 			</div>
 
+			<section class="friends-extra-section">
+				<div class="friends-info-grid">
+					<article class="friends-extra-card">
+						<div class="friends-extra-card__header">
+							<div class="friends-extra-card__icon friends-extra-card__icon--blue">
+								<svg
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M5.121 17.804A10.97 10.97 0 0112 15c2.5 0 4.847.814 6.879 2.19M15 11a3 3 0 11-6 0 3 3 0 016 0zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+									></path>
+								</svg>
+							</div>
+							<div>
+								<h2 class="friends-extra-card__title">本站信息</h2>
+								<p class="friends-extra-card__subtitle">
+									方便你复制并添加到自己的友链页
+								</p>
+							</div>
+						</div>
+
+						<div class="friends-site-profile">
+							{
+								avatarDisplaySrc && (
+									<img
+										src={avatarDisplaySrc}
+										alt={siteConfig.title}
+										class="friends-site-profile__avatar"
+										loading="lazy"
+									/>
+								)
+							}
+							<div class="friends-site-profile__copy">
+								<h3>{siteConfig.title}</h3>
+								<p>{profileConfig.bio}</p>
+							</div>
+						</div>
+
+						<div class="friends-site-info-list">
+							{
+								siteInfoItems.map((item) => (
+									<div class="friends-site-info-item">
+										<div class="friends-site-info-item__copy">
+											<span class="friends-site-info-item__label">
+												{item.label}
+											</span>
+											<p class="friends-site-info-item__value">
+												{item.value || "暂未设置"}
+											</p>
+										</div>
+										<button
+											class="copy-link-btn friends-copy-icon-btn"
+											data-url={item.value}
+											title={`复制${item.label}`}
+										>
+											<svg
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+												></path>
+											</svg>
+										</button>
+									</div>
+								))
+							}
+						</div>
+					</article>
+
+					<article class="friends-extra-card">
+						<div class="friends-extra-card__header">
+							<div class="friends-extra-card__icon friends-extra-card__icon--green">
+								<svg
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 115.656 5.656l-1.5 1.5"
+									></path>
+								</svg>
+							</div>
+							<div>
+								<h2 class="friends-extra-card__title">申请友链</h2>
+								<p class="friends-extra-card__subtitle">
+									按下面的步骤提交会更方便我回访
+								</p>
+							</div>
+						</div>
+
+						<div class="friends-steps">
+							{
+								applySteps.map((step, index) => (
+									<div class="friends-step">
+										<div class="friends-step__index">{index + 1}</div>
+										<div class="friends-step__content">
+											<h3>{step.title}</h3>
+											<p>{step.description}</p>
+										</div>
+									</div>
+								))
+							}
+						</div>
+
+						<div class="friends-template-card">
+							<div class="friends-template-card__header">
+								<h3>推荐提交格式</h3>
+								<button
+									class="copy-link-btn friends-copy-icon-btn"
+									data-url={applicationTemplate}
+									title="复制申请模板"
+								>
+									<svg
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+										></path>
+									</svg>
+								</button>
+							</div>
+							<pre class="friends-template-card__body">
+{applicationTemplate}</pre
+							>
+						</div>
+					</article>
+				</div>
+
+				<article class="friends-extra-card friends-extra-card--notice">
+					<div class="friends-extra-card__header">
+						<div class="friends-extra-card__icon friends-extra-card__icon--orange">
+							<svg
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+								></path>
+							</svg>
+						</div>
+						<div>
+							<h2 class="friends-extra-card__title">注意事项</h2>
+							<p class="friends-extra-card__subtitle">
+								提前说明清楚，后续协作会更省心
+							</p>
+						</div>
+					</div>
+
+					<div class="friends-notice-list">
+						{
+							noticeItems.map((item) => (
+								<div class="friends-notice-item">
+									<h3>{item.title}</h3>
+									<p>{item.description}</p>
+								</div>
+							))
+						}
+					</div>
+				</article>
+			</section>
+
 			<!-- 说明文档 -->
-			<Markdown class="mt-8 prose dark:prose-invert max-w-none">
-				<Content />
-			</Markdown>
+			{
+				hasFriendsContent && (
+					<Markdown class="mt-8 prose dark:prose-invert max-w-none">
+						<Content />
+					</Markdown>
+				)
+			}
 
 			<!-- 隐藏元素用于传递 i18n 文本到全局脚本 -->
 			<div id="friends-copy-success-text" style="display: none;">
@@ -185,5 +474,283 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
 		color: white !important;
 		border-color: var(--primary) !important;
 		transform: translateY(-1px);
+	}
+
+	.friends-extra-section {
+		margin-top: 2rem;
+		display: grid;
+		gap: 1.5rem;
+	}
+
+	.friends-info-grid {
+		display: grid;
+		grid-template-columns: repeat(1, minmax(0, 1fr));
+		gap: 1.5rem;
+	}
+
+	@media (min-width: 1024px) {
+		.friends-info-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	.friends-extra-card {
+		border: 1px solid var(--line-divider);
+		border-radius: 1.5rem;
+		padding: 1.5rem;
+		background:
+			linear-gradient(
+				180deg,
+				color-mix(in srgb, var(--card-bg) 92%, white 8%),
+				color-mix(in srgb, var(--btn-regular-bg) 92%, white 8%)
+			);
+		box-shadow: 0 14px 36px rgb(15 23 42 / 0.05);
+	}
+
+	.friends-extra-card--notice {
+		padding-bottom: 1.25rem;
+	}
+
+	.friends-extra-card__header {
+		display: flex;
+		align-items: center;
+		gap: 0.9rem;
+		margin-bottom: 1.2rem;
+	}
+
+	.friends-extra-card__icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 3rem;
+		height: 3rem;
+		border-radius: 1rem;
+	}
+
+	.friends-extra-card__icon svg {
+		width: 1.25rem;
+		height: 1.25rem;
+	}
+
+	.friends-extra-card__icon--blue {
+		color: #0f78d3;
+		background: rgb(219 238 255 / 0.9);
+	}
+
+	.friends-extra-card__icon--green {
+		color: #069669;
+		background: rgb(216 248 231 / 0.9);
+	}
+
+	.friends-extra-card__icon--orange {
+		color: #ef7d1a;
+		background: rgb(255 237 217 / 0.9);
+	}
+
+	.friends-extra-card__title {
+		margin: 0;
+		font-size: 1.2rem;
+		font-weight: 800;
+		color: rgb(15 23 42 / 0.88);
+	}
+
+	.friends-extra-card__subtitle {
+		margin: 0.25rem 0 0;
+		font-size: 0.92rem;
+		color: rgb(100 116 139 / 0.9);
+	}
+
+	.friends-site-profile {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		margin-bottom: 1rem;
+		padding: 1rem;
+		border-radius: 1.15rem;
+		background: linear-gradient(135deg, rgb(255 246 238), rgb(255 241 233));
+		border: 1px solid rgb(244 215 187 / 0.45);
+	}
+
+	.friends-site-profile__avatar {
+		width: 4rem;
+		height: 4rem;
+		border-radius: 1rem;
+		object-fit: cover;
+		flex-shrink: 0;
+	}
+
+	.friends-site-profile__copy h3 {
+		margin: 0;
+		font-size: 1.08rem;
+		font-weight: 800;
+		color: rgb(15 23 42 / 0.88);
+	}
+
+	.friends-site-profile__copy p {
+		margin: 0.4rem 0 0;
+		font-size: 0.93rem;
+		line-height: 1.8;
+		color: rgb(100 116 139 / 0.92);
+	}
+
+	.friends-site-info-list {
+		display: grid;
+		gap: 0.85rem;
+	}
+
+	.friends-site-info-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.9rem;
+		padding: 0.95rem 1rem;
+		border-radius: 1rem;
+		background: color-mix(in srgb, var(--btn-regular-bg) 92%, white 8%);
+		border: 1px solid color-mix(in srgb, var(--line-divider) 85%, white 15%);
+	}
+
+	.friends-site-info-item__copy {
+		min-width: 0;
+	}
+
+	.friends-site-info-item__label {
+		display: block;
+		font-size: 0.78rem;
+		font-weight: 700;
+		color: rgb(100 116 139 / 0.86);
+		margin-bottom: 0.2rem;
+	}
+
+	.friends-site-info-item__value {
+		margin: 0;
+		font-size: 0.96rem;
+		line-height: 1.6;
+		color: rgb(51 65 85 / 0.92);
+		word-break: break-all;
+	}
+
+	.friends-copy-icon-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.6rem;
+		height: 2.6rem;
+		border: 1px solid color-mix(in srgb, var(--line-divider) 80%, white 20%);
+		border-radius: 0.9rem;
+		background: rgb(255 255 255 / 0.88);
+		color: rgb(100 116 139 / 0.92);
+		flex-shrink: 0;
+	}
+
+	.friends-copy-icon-btn svg {
+		width: 1rem;
+		height: 1rem;
+	}
+
+	.friends-steps {
+		display: grid;
+		gap: 1rem;
+		margin-bottom: 1.1rem;
+	}
+
+	.friends-step {
+		display: flex;
+		gap: 0.9rem;
+		align-items: flex-start;
+	}
+
+	.friends-step__index {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.1rem;
+		height: 2.1rem;
+		border-radius: 999px;
+		background: linear-gradient(135deg, #10b981, #059669);
+		color: white;
+		font-weight: 800;
+		flex-shrink: 0;
+		box-shadow: 0 10px 24px rgb(16 185 129 / 0.18);
+	}
+
+	.friends-step__content h3 {
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 800;
+		color: rgb(15 23 42 / 0.88);
+	}
+
+	.friends-step__content p {
+		margin: 0.35rem 0 0;
+		font-size: 0.93rem;
+		line-height: 1.8;
+		color: rgb(100 116 139 / 0.92);
+	}
+
+	.friends-template-card {
+		padding: 1rem;
+		border-radius: 1.1rem;
+		background: linear-gradient(135deg, rgb(255 246 238), rgb(255 241 233));
+		border: 1px solid rgb(244 215 187 / 0.45);
+	}
+
+	.friends-template-card__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-bottom: 0.8rem;
+	}
+
+	.friends-template-card__header h3 {
+		margin: 0;
+		font-size: 0.98rem;
+		font-weight: 800;
+		color: rgb(15 23 42 / 0.88);
+	}
+
+	.friends-template-card__body {
+		margin: 0;
+		white-space: pre-wrap;
+		word-break: break-word;
+		font-size: 0.92rem;
+		line-height: 1.8;
+		color: rgb(51 65 85 / 0.88);
+		font-family: inherit;
+	}
+
+	.friends-notice-list {
+		display: grid;
+		gap: 0.9rem;
+	}
+
+	.friends-notice-item {
+		position: relative;
+		padding-left: 1rem;
+	}
+
+	.friends-notice-item::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 0.72rem;
+		width: 0.42rem;
+		height: 0.42rem;
+		border-radius: 999px;
+		background: var(--primary);
+	}
+
+	.friends-notice-item h3 {
+		margin: 0;
+		font-size: 0.98rem;
+		font-weight: 800;
+		color: rgb(15 23 42 / 0.88);
+	}
+
+	.friends-notice-item p {
+		margin: 0.3rem 0 0;
+		font-size: 0.93rem;
+		line-height: 1.8;
+		color: rgb(100 116 139 / 0.92);
 	}
 </style>

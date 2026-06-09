@@ -35,6 +35,17 @@ export const en: Translation = {
 	[Key.friendsCopyLink]: "Copy Link",
 	[Key.friendsCopySuccess]: "Copied",
 	[Key.friendsTags]: "Tags",
+	[Key.externalLinkBadge]: "External Link",
+	[Key.externalLinkTitle]: "You are about to open an external site",
+	[Key.externalLinkDescription]:
+		"You are still on this site. After confirmation, the destination link will open. Please evaluate the content and risks of the external site by yourself.",
+	[Key.externalLinkTarget]: "Destination",
+	[Key.externalLinkTipContent]:
+		"External content and availability are not controlled by this site.",
+	[Key.externalLinkTipSecurity]:
+		"Be careful with account, privacy, download, and authorization actions.",
+	[Key.externalLinkCancel]: "Cancel",
+	[Key.externalLinkContinue]: "Continue",
 	[Key.untitled]: "Untitled",
 	[Key.uncategorized]: "Uncategorized",
 	[Key.noTags]: "No Tags",

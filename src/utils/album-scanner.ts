@@ -53,6 +53,11 @@ async function processAlbumFolder(
 		return null;
 	}
 
+	// 隐藏相册直接跳过，不再继续校验封面等资源
+	if (info.hidden === true) {
+		return null;
+	}
+
 	// 检查是否为外链模式
 	const isExternalMode = info.mode === "external";
 	let photos: Photo[] = [];
@@ -83,12 +88,6 @@ async function processAlbumFolder(
 			? `/images/albums/${folderName}/cover.webp`
 			: `/images/albums/${folderName}/cover.jpg`;
 		photos = scanPhotos(folderPath, folderName);
-	}
-
-	// 检查是否隐藏相册
-	if (info.hidden === true) {
-		console.log(`相册 ${folderName} 已设置为隐藏，跳过显示`);
-		return null;
 	}
 
 	// 构建相册对象

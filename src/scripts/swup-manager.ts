@@ -23,6 +23,7 @@ import {
 	getFancyboxHandler,
 	initFancybox,
 } from "./handlers/fancybox-handler";
+import { initExternalLinkHandler } from "./handlers/external-link-handler";
 import type { PanelHandler } from "./handlers/panel-handler";
 import { getPanelHandler, initPanelHandler } from "./handlers/panel-handler";
 import { checkKatex, initCustomScrollbar } from "./handlers/scroll-handler";
@@ -78,6 +79,9 @@ export class SwupManager {
 
 		// 初始化链接预加载
 		this.initPreloading();
+
+		// 初始化外链确认弹窗
+		this.initExternalLinkConfirm();
 
 		this.initialized = true;
 		console.log("SwupManager: 初始化完成");
@@ -171,6 +175,19 @@ export class SwupManager {
 			});
 		} else {
 			initLinkPreloading();
+		}
+	}
+
+	/**
+	 * 初始化外链确认弹窗
+	 */
+	private initExternalLinkConfirm(): void {
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", () => {
+				initExternalLinkHandler();
+			});
+		} else {
+			initExternalLinkHandler();
 		}
 	}
 

@@ -35,6 +35,17 @@ export const ja: Translation = {
 	[Key.friendsCopyLink]: "リンク",
 	[Key.friendsCopySuccess]: "コピーしました",
 	[Key.friendsTags]: "タグ",
+	[Key.externalLinkBadge]: "外部リンク",
+	[Key.externalLinkTitle]: "外部サイトを開こうとしています",
+	[Key.externalLinkDescription]:
+		"現在のページにはそのまま残ります。確認後に外部リンクを開くため、移動先の内容や安全性をご自身で確認してください。",
+	[Key.externalLinkTarget]: "リンク先",
+	[Key.externalLinkTipContent]:
+		"外部サイトの内容や可用性は、このサイトでは管理していません。",
+	[Key.externalLinkTipSecurity]:
+		"ログイン、ダウンロード、認可操作を行う場合は、アカウントとプライバシーにご注意ください。",
+	[Key.externalLinkCancel]: "キャンセル",
+	[Key.externalLinkContinue]: "続ける",
 	[Key.untitled]: "無題",
 	[Key.uncategorized]: "未分類",
 	[Key.noTags]: "タグはありません",

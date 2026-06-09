@@ -35,6 +35,17 @@ export const zh_TW: Translation = {
 	[Key.friendsCopyLink]: "複製鏈接",
 	[Key.friendsCopySuccess]: "已複製",
 	[Key.friendsTags]: "標籤",
+	[Key.externalLinkBadge]: "外部連結",
+	[Key.externalLinkTitle]: "即將開啟外部網站",
+	[Key.externalLinkDescription]:
+		"你目前仍停留在本站。確認後將前往目標外鏈，請自行判斷目標站點內容與訪問風險。",
+	[Key.externalLinkTarget]: "目標站點",
+	[Key.externalLinkTipContent]:
+		"外部站點內容與可用性不受本站控制，請自行甄別。",
+	[Key.externalLinkTipSecurity]:
+		"如涉及登入、下載或授權操作，請留意帳號與隱私安全。",
+	[Key.externalLinkCancel]: "取消",
+	[Key.externalLinkContinue]: "繼續跳轉",
 	[Key.untitled]: "無標題",
 	[Key.uncategorized]: "未分類",
 	[Key.noTags]: "無標籤",

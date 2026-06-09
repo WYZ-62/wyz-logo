@@ -1,12 +1,11 @@
 ---
 import { FilterTabs } from "@components/atoms/filter-tabs";
-import { PageHeader } from "@components/features/page-header";
 import { SkillCard } from "@components/features/skills";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { Icon } from "astro-icon/components";
 
 import { siteConfig } from "../config";
-import { skillsData } from "../data/skills";
+import { skillsData, type Skill } from "../data/skills";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 
@@ -14,59 +13,79 @@ if (!siteConfig.featurePages.skills) {
 	return Astro.redirect("/404/");
 }
 
-const categories = [...new Set(skillsData.map((skill) => skill.category))];
+const categoryMeta = {
+	backend: {
+		label: "后端",
+		icon: "material-symbols:dns",
+		color: "#8B5CF6",
+	},
+	database: {
+		label: "数据库",
+		icon: "material-symbols:storage",
+		color: "#10B981",
+	},
+	tools: {
+		label: "工具",
+		icon: "material-symbols:build",
+		color: "#F59E0B",
+	},
+	frontend: {
+		label: "前端",
+		icon: "material-symbols:web",
+		color: "#3B82F6",
+	},
+	other: {
+		label: "其他",
+		icon: "material-symbols:widgets",
+		color: "#EC4899",
+	},
+} as const;
 
-const getCategoryText = (category: string) => {
-	switch (category) {
-		case "frontend":
-			return i18n(I18nKey.skillsFrontend);
-		case "backend":
-			return i18n(I18nKey.skillsBackend);
-		case "database":
-			return i18n(I18nKey.skillsDatabase);
-		case "tools":
-			return i18n(I18nKey.skillsTools);
-		case "other":
-			return i18n(I18nKey.skillsOther);
-		default:
-			return category;
+const levelMeta = {
+	expert: { label: i18n(I18nKey.skillsExpert), color: "#EF4444" },
+	advanced: { label: i18n(I18nKey.skillsAdvanced), color: "#F97316" },
+	intermediate: { label: i18n(I18nKey.skillsIntermediate), color: "#F59E0B" },
+	beginner: { label: i18n(I18nKey.skillsBeginner), color: "#22C55E" },
+} as const;
+
+const categoryOrder = ["backend", "database", "tools", "frontend", "other"] as const;
+const categories = categoryOrder.filter((category) =>
+	skillsData.some((skill) => skill.category === category),
+);
+
+const formatExperience = (exp: { years: number; months: number }) => {
+	const parts: string[] = [];
+	if (exp.years > 0) {
+		parts.push(`${exp.years} ${i18n(I18nKey.skillYears)}`);
 	}
+	if (exp.months > 0) {
+		parts.push(`${exp.months} ${i18n(I18nKey.skillMonths)}`);
+	}
+	return parts.join(" ");
 };
 
-const getCategoryIcon = (category: string) => {
-	switch (category) {
-		case "frontend":
-			return "material-symbols:web";
-		case "backend":
-			return "material-symbols:dns";
-		case "database":
-			return "material-symbols:storage";
-		case "tools":
-			return "material-symbols:build";
-		case "other":
-			return "material-symbols:widgets";
-		default:
-			return "material-symbols:category";
-	}
-};
+const countByCategory = (category: keyof typeof categoryMeta) =>
+	skillsData.filter((skill) => skill.category === category).length;
+
+const focusSkills = ["ai-agent", "java", "spring-boot"]
+	.map((id) => skillsData.find((skill) => skill.id === id))
+	.filter((skill): skill is Skill => Boolean(skill));
 
 const filterTabs = [
 	{
 		value: "all",
 		label: i18n(I18nKey.friendsFilterAll),
-		icon: "material-symbols:apps",
 		count: skillsData.length,
 	},
 	...categories.map((category) => ({
 		value: category,
-		label: getCategoryText(category),
-		icon: getCategoryIcon(category),
-		count: skillsData.filter((s) => s.category === category).length,
+		label: categoryMeta[category].label,
+		count: countByCategory(category),
 	})),
 ];
 
 const title = i18n(I18nKey.skills);
-const subtitle = i18n(I18nKey.skillsSubtitle);
+const subtitle = "以 Java 后端为主，持续探索 AI Agent 与全栈协作开发";
 ---
 
 <MainGridLayout title={title} description={subtitle}>
@@ -84,15 +103,70 @@ const subtitle = i18n(I18nKey.skillsSubtitle);
 	<div
 		class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32"
 	>
-		<div class="card-base z-10 px-6 sm:px-9 py-6 relative w-full">
-			<PageHeader title={title} subtitle={subtitle} />
+		<div class="card-base skills-page-card z-10 px-6 sm:px-9 py-6 relative w-full">
+			<section class="skills-focus-panel mb-8">
+				<div class="skills-focus-copy">
+					<div class="skills-focus-kicker">AI Agent Focus</div>
+					<h1>
+						把 AI Agent 当成当前重点深挖的方向，持续把智能体能力接到真实项目里。
+					</h1>
+					<p>
+						现在不只是继续打磨 Java 后端与常见工程化能力，也在持续探索 AI Agent、工具调用、工作流编排、提示词设计以及和后端服务协同落地的实现方式。
+					</p>
+					<div class="skills-focus-tags" aria-label="技能重点">
+						<span>AI Agent</span>
+						<span>Java 后端</span>
+						<span>智能体实践</span>
+					</div>
+				</div>
 
-			<div class="mb-8">
-				<FilterTabs tabs={filterTabs} dataAttr="category" />
+				<div class="skills-focus-list">
+					{
+						focusSkills.map((skill) => {
+							const level = levelMeta[skill.level];
+							return (
+								<article
+									class="skills-focus-card"
+									style={`--skill-color: ${skill.color ?? "#3B82F6"};`}
+								>
+									<div class="skills-focus-card-head">
+										<span style={`color: ${level.color}`}>{level.label}</span>
+										<strong>{formatExperience(skill.experience)}</strong>
+									</div>
+									<h2>{skill.name}</h2>
+									<p>{skill.description}</p>
+								</article>
+							);
+						})
+					}
+				</div>
+			</section>
+
+			<div class="mb-7">
+				<FilterTabs tabs={filterTabs} dataAttr="category" class="skills-filter-tabs" />
 			</div>
 
-			<div id="skills-grid" class="grid gap-6 items-start">
-				{skillsData.map((skill) => <SkillCard skill={skill} />)}
+			<div id="skills-grid" class="skills-category-list">
+				{
+					categories.map((category) => (
+						<section class="skills-category-section" data-category={category}>
+							<h2>
+								<Icon
+									name={categoryMeta[category].icon}
+									class="category-title-icon"
+									style={`color: ${categoryMeta[category].color}`}
+								/>
+								{categoryMeta[category].label}
+								<span>({countByCategory(category)})</span>
+							</h2>
+							<div class="skills-category-grid">
+								{skillsData
+									.filter((skill) => skill.category === category)
+									.map((skill) => <SkillCard skill={skill} />)}
+							</div>
+						</section>
+					))
+				}
 			</div>
 
 			<div id="no-results" class="hidden text-center py-16">
@@ -109,23 +183,323 @@ const subtitle = i18n(I18nKey.skillsSubtitle);
 </MainGridLayout>
 
 <style is:global>
-	#skills-grid {
-		grid-template-columns: 1fr;
+	.skills-page-card {
+		background:
+			radial-gradient(circle at 20% 31%, rgba(255, 219, 231, 0.62) 0 0.72rem, transparent 0.78rem),
+			radial-gradient(circle at 83% 42%, rgba(255, 219, 231, 0.58) 0 0.62rem, transparent 0.68rem),
+			radial-gradient(circle at 76% 82%, rgba(255, 219, 231, 0.52) 0 0.7rem, transparent 0.76rem),
+			rgba(255, 255, 255, 0.92);
 	}
 
-	@media (min-width: 640px) {
-		#skills-grid {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
+	.dark .skills-page-card {
+		background:
+			radial-gradient(circle at 20% 31%, rgba(236, 72, 153, 0.22) 0 0.72rem, transparent 0.78rem),
+			radial-gradient(circle at 83% 42%, rgba(236, 72, 153, 0.18) 0 0.62rem, transparent 0.68rem),
+			radial-gradient(circle at 76% 82%, rgba(236, 72, 153, 0.16) 0 0.7rem, transparent 0.76rem),
+			rgba(15, 23, 42, 0.88);
+	}
+
+	.skills-focus-panel {
+		position: relative;
+		display: grid;
+		grid-template-columns: minmax(0, 1.16fr) minmax(270px, 0.84fr);
+		align-items: center;
+		gap: 1.85rem;
+		min-height: 30rem;
+		padding: clamp(1.4rem, 4vw, 2.15rem);
+		overflow: hidden;
+		border: 1px solid rgba(148, 163, 184, 0.3);
+		border-radius: 1.55rem;
+		background:
+			linear-gradient(135deg, rgba(239, 246, 255, 0.96), rgba(255, 251, 245, 0.9) 50%, rgba(253, 242, 248, 0.82)),
+			rgba(255, 255, 255, 0.88);
+		box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+	}
+
+	.skills-focus-panel::before,
+	.skills-focus-panel::after {
+		position: absolute;
+		content: "";
+		width: 1.35rem;
+		height: 0.72rem;
+		border-radius: 999px 999px 999px 0;
+		background: rgba(255, 205, 225, 0.48);
+		filter: blur(0.5px);
+		transform: rotate(24deg);
+		pointer-events: none;
+	}
+
+	.skills-focus-panel::before {
+		top: 24%;
+		right: 34%;
+	}
+
+	.skills-focus-panel::after {
+		right: 8%;
+		bottom: 5%;
+		width: 1.55rem;
+		height: 0.85rem;
+		transform: rotate(-68deg);
+	}
+
+	.dark .skills-focus-panel {
+		background:
+			linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(76, 29, 149, 0.18)),
+			rgba(15, 23, 42, 0.9);
+		border-color: rgba(255, 255, 255, 0.1);
+	}
+
+	.skills-focus-copy {
+		position: relative;
+		z-index: 1;
+		min-width: 0;
+	}
+
+	.skills-focus-kicker {
+		display: inline-flex;
+		align-items: center;
+		min-width: min(19rem, 100%);
+		padding: 0.42rem 1.12rem;
+		border-radius: 999px;
+		background: linear-gradient(90deg, rgba(59, 130, 246, 0.22), rgba(59, 130, 246, 0.06));
+		color: #2563eb;
+		font-size: 0.82rem;
+		font-weight: 900;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	.skills-focus-copy h1 {
+		margin-top: 1.3rem;
+		max-width: 34rem;
+		font-size: clamp(2.55rem, 5.2vw, 3.85rem);
+		line-height: 1.12;
+		font-weight: 950;
+		letter-spacing: -0.055em;
+		color: rgba(17, 24, 39, 0.96);
+	}
+
+	.dark .skills-focus-copy h1 {
+		color: rgba(255, 255, 255, 0.94);
+	}
+
+	.skills-focus-copy p {
+		margin-top: 1.45rem;
+		max-width: 40rem;
+		font-size: 1.02rem;
+		line-height: 1.95;
+		color: rgba(31, 41, 55, 0.66);
+	}
+
+	.dark .skills-focus-copy p {
+		color: rgba(255, 255, 255, 0.68);
+	}
+
+	.skills-focus-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.72rem;
+		margin-top: 1.35rem;
+	}
+
+	.skills-focus-tags span {
+		padding: 0.55rem 1.02rem;
+		border: 1px solid rgba(59, 130, 246, 0.24);
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.78);
+		box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+		color: rgba(30, 41, 59, 0.82);
+		font-size: 0.88rem;
+		font-weight: 850;
+	}
+
+	.dark .skills-focus-tags span {
+		background: rgba(255, 255, 255, 0.08);
+		color: rgba(255, 255, 255, 0.78);
+		border-color: rgba(255, 255, 255, 0.12);
+	}
+
+	.skills-focus-list {
+		position: relative;
+		z-index: 1;
+		display: grid;
+		gap: 1.05rem;
+		align-content: center;
+	}
+
+	.skills-focus-card {
+		padding: 1.25rem 1.35rem;
+		border: 1px solid color-mix(in srgb, var(--skill-color) 26%, transparent);
+		border-radius: 1.08rem;
+		background:
+			linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 247, 237, 0.58)),
+			rgba(255, 255, 255, 0.82);
+		box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
+	}
+
+	.dark .skills-focus-card {
+		background: rgba(255, 255, 255, 0.07);
+		border-color: color-mix(in srgb, var(--skill-color) 30%, transparent);
+	}
+
+	.skills-focus-card-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.9rem;
+		font-size: 0.8rem;
+		font-weight: 900;
+	}
+
+	.skills-focus-card-head strong {
+		padding: 0.25rem 0.58rem;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.72);
+		color: rgba(30, 41, 59, 0.56);
+	}
+
+	.dark .skills-focus-card-head strong {
+		background: rgba(255, 255, 255, 0.1);
+		color: rgba(255, 255, 255, 0.62);
+	}
+
+	.skills-focus-card h2 {
+		margin-top: 0.78rem;
+		color: rgba(17, 24, 39, 0.92);
+		font-size: 1.18rem;
+		font-weight: 900;
+	}
+
+	.dark .skills-focus-card h2 {
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.skills-focus-card p {
+		display: -webkit-box;
+		margin-top: 0.72rem;
+		color: rgba(55, 65, 81, 0.58);
+		font-size: 0.94rem;
+		line-height: 1.75;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		overflow: hidden;
+	}
+
+	.dark .skills-focus-card p {
+		color: rgba(255, 255, 255, 0.62);
+	}
+
+	.skills-filter-tabs {
+		justify-content: flex-start;
+	}
+
+	.skills-filter-tabs .filter-tabs-item {
+		border-radius: 999px;
+		padding: 0.58rem 1.08rem;
+		background: rgba(255, 247, 237, 0.9);
+		border-color: rgba(249, 115, 22, 0.24);
+		box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+		color: rgba(30, 41, 59, 0.74);
+	}
+
+	.skills-filter-tabs .filter-tabs-item.active {
+		background: rgba(255, 237, 213, 0.98);
+		color: rgba(154, 52, 18, 0.94);
+		border-color: rgba(249, 115, 22, 0.42);
+	}
+
+	.skills-filter-tabs .filter-tabs-count {
+		margin-left: 0.12rem;
+		opacity: 0.72;
+	}
+
+	.skills-category-list {
+		display: grid;
+		gap: 1.9rem;
+	}
+
+	.skills-category-section.filtered-out {
+		display: none;
+	}
+
+	.skills-category-section h2 {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 1rem;
+		color: rgba(17, 24, 39, 0.92);
+		font-size: 1.16rem;
+		font-weight: 900;
+	}
+
+	.dark .skills-category-section h2 {
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.category-title-icon {
+		width: 1rem;
+		height: 1rem;
+	}
+
+	.skills-category-section h2 span {
+		color: rgba(249, 115, 22, 0.78);
+		font-size: 0.84rem;
+	}
+
+	.skills-category-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1.45rem 1.55rem;
+	}
+
+	.skill-card.filtered-out {
+		display: none;
+	}
+
+	@media (max-width: 880px) {
+		.skills-focus-panel {
+			grid-template-columns: 1fr;
+			min-height: auto;
+		}
+
+		.skills-focus-list {
+			grid-template-columns: 1fr;
+			max-width: 28rem;
+		}
+
+		.skills-focus-copy h1 {
+			max-width: 100%;
+			font-size: clamp(2.15rem, 9vw, 3.25rem);
+		}
+
+		.skills-category-grid {
+			grid-template-columns: 1fr;
 		}
 	}
 
-	#main-grid[data-layout-mode="grid"] #skills-grid {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-	}
+	@media (max-width: 560px) {
+		.skills-page-card {
+			padding-left: 1rem;
+			padding-right: 1rem;
+		}
 
-	@media (max-width: 639px) {
-		#main-grid[data-layout-mode="grid"] #skills-grid {
-			grid-template-columns: 1fr;
+		.skills-focus-panel {
+			padding: 1.05rem;
+			border-radius: 1.1rem;
+		}
+
+		.skills-focus-kicker {
+			width: 100%;
+			min-width: 0;
+		}
+
+		.skills-focus-copy h1 {
+			letter-spacing: -0.04em;
+		}
+
+		.skills-focus-copy p {
+			font-size: 0.92rem;
+			line-height: 1.8;
 		}
 	}
 </style>
