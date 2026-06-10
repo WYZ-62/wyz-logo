@@ -1,0 +1,100 @@
+---
+import { siteConfig } from "@/config";
+
+interface Props {
+	postSlug?: string;
+	topicIds?: string[];
+}
+
+const { postSlug = "", topicIds = [] } = Astro.props as Props;
+
+const config = {
+	enable: siteConfig.contentProtection?.enable ?? false,
+	mode: siteConfig.contentProtection?.mode ?? "all",
+	postSlugs: siteConfig.contentProtection?.postSlugs ?? [],
+	topicIds: siteConfig.contentProtection?.topicIds ?? [],
+	disableSelection: siteConfig.contentProtection?.disableSelection ?? true,
+	disableContextMenu:
+		siteConfig.contentProtection?.disableContextMenu ?? true,
+	disableCopy: siteConfig.contentProtection?.disableCopy ?? true,
+	disableDevToolsShortcuts:
+		siteConfig.contentProtection?.disableDevToolsShortcuts ?? true,
+	allowCodeCopy: siteConfig.contentProtection?.allowCodeCopy ?? true,
+};
+
+const normalizedPostSlug = postSlug
+	.replace(/\.(md|mdx|markdown)$/i, "")
+	.trim()
+	.toLowerCase();
+const normalizedTopicIds = topicIds.map((topicId) =>
+	topicId.trim().toLowerCase(),
+);
+const selectedPostSlugs = config.postSlugs.map((slug) =>
+	slug.trim().toLowerCase(),
+);
+const selectedTopicIds = config.topicIds.map((topicId) =>
+	topicId.trim().toLowerCase(),
+);
+
+const matchesSelectedPost = selectedPostSlugs.includes(normalizedPostSlug);
+const matchesSelectedTopic = normalizedTopicIds.some((topicId) =>
+	selectedTopicIds.includes(topicId),
+);
+const shouldEnableProtection =
+	config.enable &&
+	(config.mode === "all" || matchesSelectedPost || matchesSelectedTopic);
+
+const selectionProtectionCss = `
+	[data-copy-protected="true"] {
+		user-select: none;
+		-webkit-user-select: none;
+	}
+
+	${
+		config.allowCodeCopy
+			? `
+	[data-copy-protected="true"] pre,
+	[data-copy-protected="true"] pre *,
+	[data-copy-protected="true"] code,
+	[data-copy-protected="true"] code *,
+	[data-copy-protected="true"] .copy-btn,
+	[data-copy-protected="true"] .copy-btn *,
+	[data-copy-protected="true"] .expressive-code,
+	[data-copy-protected="true"] .expressive-code *,
+	[data-copy-protected="true"] .astro-code,
+	[data-copy-protected="true"] .astro-code * {
+		user-select: text;
+		-webkit-user-select: text;
+	}
+	`
+			: ""
+	}
+`;
+---
+
+{
+	shouldEnableProtection && (
+		<>
+			{config.disableSelection && (
+				<style is:inline set:html={selectionProtectionCss} />
+			)}
+
+			<script
+				is:inline
+				type="application/json"
+				id="content-protection-config"
+				set:html={JSON.stringify({
+					protectedSelectors: [
+						".markdown-content",
+						"#decrypted-content",
+					],
+					disableContextMenu: config.disableContextMenu,
+					disableCopy: config.disableCopy,
+					disableDevToolsShortcuts: config.disableDevToolsShortcuts,
+					allowCodeCopy: config.allowCodeCopy,
+				})}
+			/>
+			<script is:inline src="/js/content-protection.js" />
+		</>
+	)
+}

@@ -15,6 +15,7 @@ import {
 	PostNavigation,
 } from "@components/features/posts";
 import License from "@components/misc/License.astro";
+import ContentProtection from "@components/misc/ContentProtection.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
@@ -35,6 +36,7 @@ import { licenseConfig } from "src/config";
 import { permalinkConfig } from "@/config";
 
 import { profileConfig, siteConfig } from "../config";
+import { getTopicIdsForPost } from "../data/topics";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
 
 export async function getStaticPaths() {
@@ -78,6 +80,7 @@ const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
 
 const { remarkPluginFrontmatter } = await render(entry);
+const topicIds = getTopicIdsForPost(entry);
 
 // 处理加密逻辑
 let encryptedContent = "";
@@ -127,6 +130,7 @@ const jsonLd = {
 	<script>
 		import("../scripts/right-sidebar-layout.js");
 	</script>
+	<ContentProtection postSlug={entry.id} topicIds={topicIds} />
 	<div
 		class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative mb-4"
 	>

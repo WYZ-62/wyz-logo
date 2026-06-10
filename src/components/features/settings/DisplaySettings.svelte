@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { siteConfig } from "@/config";
 	import I18nKey from "@i18n/i18nKey";
 	import { i18n } from "@i18n/translation";
 	import Icon from "@iconify/svelte";
@@ -9,8 +10,9 @@
 
 	export let className = "";
 
-	let hue = 205;
-	let defaultHue = 205;
+	const configuredHue = siteConfig.themeColor.hue ?? 205;
+	let hue = configuredHue;
+	let defaultHue = configuredHue;
 	let isMounted = false;
 
 	function resetHue() {

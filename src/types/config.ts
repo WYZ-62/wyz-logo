@@ -135,6 +135,19 @@ export interface SiteConfig {
 		useNewStyle?: boolean; // 是否使用新样式（悬停高亮样式）还是旧样式（外框常亮样式）
 	};
 
+	// 轻量内容保护配置
+	contentProtection?: {
+		enable: boolean; // 是否启用内容保护功能
+		mode?: "all" | "selected"; // all=全部文章，selected=仅指定文章/专题
+		postSlugs?: string[]; // 需要启用保护的文章 slug 列表
+		topicIds?: string[]; // 需要启用保护的专题 id 列表
+		disableSelection?: boolean; // 是否禁止正文文本选中
+		disableContextMenu?: boolean; // 是否禁用正文区域右键菜单
+		disableCopy?: boolean; // 是否拦截复制/剪切行为
+		disableDevToolsShortcuts?: boolean; // 是否拦截 F12 / Ctrl+Shift+I / Ctrl+U
+		allowCodeCopy?: boolean; // 是否允许代码块继续选中和复制
+	};
+
 	// 壁纸模式配置
 	wallpaperMode: {
 		defaultMode: "banner" | "fullscreen" | "none"; // 默认壁纸模式：banner=顶部横幅，fullscreen=全屏壁纸，none=无壁纸
@@ -524,4 +537,12 @@ export interface PageProgressBarConfig {
 export interface ThirdPartyAnalyticsConfig {
 	enable: boolean; // 是否启用第三方统计（Microsoft Clarity），默认关闭
 	clarityId?: string; // Clarity 项目 ID
+	umami?: {
+		enable: boolean; // 是否启用 Umami 跟踪脚本
+		scriptUrl: string; // Umami 脚本地址
+		websiteId: string; // Umami website-id
+		shareUrl?: string | false; // 用于前端读取统计数据的 Umami share 链接
+		dashboardUrl?: string; // Umami 后台统计页链接，用于跳转查看完整数据
+		trackSwupPageviews?: boolean; // 是否在 Swup 切页后补发页面浏览事件
+	};
 }

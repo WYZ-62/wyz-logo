@@ -11,6 +11,7 @@ import type { NavMenuPanelProps, ProcessedNavBarLink } from "./types";
 const navTitleMap: Record<string, string> = {
 	Links: I18nKey.navLinks,
 	My: I18nKey.navMy,
+	我的: I18nKey.navMy,
 	About: I18nKey.navAbout,
 	Others: I18nKey.navOthers,
 	Anime: I18nKey.anime,
@@ -64,6 +65,11 @@ const processedLinks: ProcessedNavBarLink[] = (
                             hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition"
 							data-mobile-dropdown-trigger
 							aria-expanded="false"
+							data-nav-group={
+								link.name === "My" || link.name === "我的"
+									? "my"
+									: undefined
+							}
 						>
 							<div class="flex items-center transition text-black/75 dark:text-white/75 font-bold">
 								{link.icon && (
@@ -159,6 +165,18 @@ const processedLinks: ProcessedNavBarLink[] = (
 
 	.mobile-dropdown[data-expanded="true"] .mobile-dropdown-arrow {
 		@apply rotate-180;
+	}
+
+	.mobile-dropdown[data-expanded="true"] [data-nav-group="my"] {
+		background: var(--btn-regular-bg);
+		color: var(--btn-content);
+	}
+
+	.mobile-dropdown[data-expanded="true"] [data-nav-group="my"] > div,
+	.mobile-dropdown[data-expanded="true"]
+		[data-nav-group="my"]
+		.mobile-dropdown-arrow {
+		color: var(--btn-content);
 	}
 </style>
 

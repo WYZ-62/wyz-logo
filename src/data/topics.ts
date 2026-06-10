@@ -1,5 +1,13 @@
 import type { PostForList } from "@/utils/content-utils";
 
+interface TopicMatchCandidate {
+	id: string;
+	data: {
+		tags: string[];
+		category?: string | null;
+	};
+}
+
 export interface TopicDefinition {
 	id: string;
 	title: string;
@@ -70,30 +78,36 @@ function normalizeSlug(slug: string): string {
 	return normalizeText(slug.replace(/\.(md|mdx|markdown)$/i, ""));
 }
 
+function matchesTopic(
+	topic: TopicDefinition,
+	post: TopicMatchCandidate | PostForList,
+): boolean {
+	const postTags = new Set(post.data.tags.map((tag) => normalizeText(tag)));
+	const postCategory = normalizeText(post.data.category);
+	const postSlug = normalizeSlug(post.id);
+
+	return topic.postMatchers.some((matcher) => {
+		const hasSlugMatch =
+			matcher.slugs?.some((slug) => normalizeSlug(slug) === postSlug) ??
+			false;
+		const hasTagMatch =
+			matcher.tags?.some((tag) => postTags.has(normalizeText(tag))) ??
+			false;
+		const hasCategoryMatch =
+			matcher.categories?.some(
+				(category) => normalizeText(category) === postCategory,
+			) ?? false;
+
+		return hasSlugMatch || hasTagMatch || hasCategoryMatch;
+	});
+}
+
 export function buildTopics(posts: PostForList[]): TopicWithPosts[] {
 	return topicDefinitions
 		.map((topic) => {
-			const matchedPosts = posts.filter((post) => {
-				const postTags = new Set(post.data.tags.map((tag) => normalizeText(tag)));
-				const postCategory = normalizeText(post.data.category);
-				const postSlug = normalizeSlug(post.id);
-
-				return topic.postMatchers.some((matcher) => {
-					const hasSlugMatch =
-						matcher.slugs?.some(
-							(slug) => normalizeSlug(slug) === postSlug,
-						) ?? false;
-					const hasTagMatch =
-						matcher.tags?.some((tag) => postTags.has(normalizeText(tag))) ??
-						false;
-					const hasCategoryMatch =
-						matcher.categories?.some(
-							(category) => normalizeText(category) === postCategory,
-						) ?? false;
-
-					return hasSlugMatch || hasTagMatch || hasCategoryMatch;
-				});
-			});
+			const matchedPosts = posts.filter((post) =>
+				matchesTopic(topic, post),
+			);
 
 			return {
 				...topic,
@@ -101,4 +115,12 @@ export function buildTopics(posts: PostForList[]): TopicWithPosts[] {
 			};
 		})
 		.filter((topic) => topic.posts.length > 0);
+}
+
+export function getTopicIdsForPost(
+	post: TopicMatchCandidate | PostForList,
+): string[] {
+	return topicDefinitions
+		.filter((topic) => matchesTopic(topic, post))
+		.map((topic) => topic.id);
 }

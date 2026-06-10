@@ -9,6 +9,7 @@ import {
 	getSortedPosts,
 	getTagList,
 } from "../../../utils/content-utils";
+import { getPostUrl } from "../../../utils/url-utils";
 import WidgetLayout from "../common/WidgetLayout.astro";
 
 interface Props {
@@ -20,9 +21,11 @@ const { class: className, style } = Astro.props;
 
 // 从配置中获取站点开始日期
 const siteStartDate = siteConfig.siteStartDate || "2025-01-01";
+const umamiShareUrl = Boolean(siteConfig.thirdPartyAnalytics?.umami?.shareUrl);
 
 // 获取所有文章
 const posts = await getSortedPosts();
+const articlePaths = posts.map((post) => getPostUrl(post));
 const categories = await getCategoryList();
 const tags = await getTagList();
 
@@ -96,6 +99,14 @@ const stats = [
 		formatted: true,
 	},
 	{
+		icon: "material-symbols:local-library-outline-rounded",
+		label: i18n(I18nKey.siteStatsTotalViews),
+		value: "—",
+		dynamic: true,
+		id: "total-views",
+		hidden: !umamiShareUrl,
+	},
+	{
 		icon: "material-symbols:calendar-clock-outline",
 		label: i18n(I18nKey.siteStatsRunningDays),
 		value: 0, // 将由客户端更新
@@ -122,38 +133,48 @@ const stats = [
 >
 	<div class="flex flex-col gap-1">
 		{
-			stats.map((stat) => (
-				<div class="flex items-center justify-between px-2 py-2">
-					<div class="flex items-center gap-2.5 flex-1 min-w-0">
-						<div class="text-[var(--primary)] text-xl shrink-0">
-							<Icon name={stat.icon} />
-						</div>
-						<span class="text-neutral-700 dark:text-neutral-300 font-medium text-sm break-words leading-tight">
-							{stat.label}
-						</span>
-					</div>
-					<div class="flex items-center ml-3 shrink-0">
-						<span
-							class="text-base font-bold text-neutral-900 dark:text-neutral-100"
-							data-stat-id={stat.id}
-						>
-							{stat.formatted
-								? formatNumber(stat.value)
-								: stat.value}
-						</span>
-						{stat.suffix && (
-							<span class="text-sm text-neutral-500 dark:text-neutral-400 ml-1">
-								{stat.suffix}
+			stats
+				.filter((stat) => !stat.hidden)
+				.map((stat) => (
+					<div class="flex items-center justify-between px-2 py-2">
+						<div class="flex items-center gap-2.5 flex-1 min-w-0">
+							<div class="text-[var(--primary)] text-xl shrink-0">
+								<Icon name={stat.icon} />
+							</div>
+							<span class="text-neutral-700 dark:text-neutral-300 font-medium text-sm break-words leading-tight">
+								{stat.label}
 							</span>
-						)}
+						</div>
+						<div class="flex items-center ml-3 shrink-0">
+							<span
+								class="text-base font-bold text-neutral-900 dark:text-neutral-100"
+								data-stat-id={stat.id}
+							>
+								{stat.formatted
+									? formatNumber(stat.value)
+									: stat.value}
+							</span>
+							{stat.suffix && (
+								<span class="text-sm text-neutral-500 dark:text-neutral-400 ml-1">
+									{stat.suffix}
+								</span>
+							)}
+						</div>
 					</div>
-				</div>
-			))
+				))
 		}
 	</div>
 </WidgetLayout>
 
-<script is:inline define:vars={{ siteStartDate, lastPostDate }}>
+<script
+	is:inline
+	define:vars={{
+		siteStartDate,
+		lastPostDate,
+		umamiShareUrl: Boolean(umamiShareUrl),
+		articlePaths,
+	}}
+>
 	function updateDynamicStats() {
 		const today = new Date();
 
@@ -192,9 +213,46 @@ const stats = [
 		}
 	}
 
+	async function updateUmamiStats() {
+		if (!umamiShareUrl) {
+			return;
+		}
+
+		const totalViewsElements = document.querySelectorAll(
+			'[data-stat-id="total-views"]',
+		);
+		if (totalViewsElements.length === 0) {
+			return;
+		}
+
+		if (!window.oddmisc?.getSiteStats) {
+			setTimeout(updateUmamiStats, 600);
+			return;
+		}
+
+		try {
+			const articleStats = await Promise.all(
+				articlePaths.map((path) => window.oddmisc.getPageStats(path)),
+			);
+			const totalViews = articleStats.reduce(
+				(sum, stat) => sum + (stat.pageviews || 0),
+				0,
+			);
+			totalViewsElements.forEach((element) => {
+				element.textContent = totalViews.toLocaleString();
+			});
+		} catch (error) {
+			console.error("Error fetching site stats:", error);
+		}
+	}
+
 	// 页面加载时更新
 	updateDynamicStats();
+	updateUmamiStats();
+	window.addEventListener("oddmisc-ready", updateUmamiStats);
+	window.addEventListener("umami:stats-refresh", updateUmamiStats);
 
 	// 每小时更新一次（可选，因为天数变化较慢）
 	setInterval(updateDynamicStats, 60 * 60 * 1000);
+	setInterval(updateUmamiStats, 10 * 60 * 1000);
 </script>

@@ -1,13 +1,12 @@
 ---
 /**
  * AnalyticsScripts.astro
- * 第三方分析脚本组件 - 延迟加载优化
+ * 第三方分析脚本组件
  *
  * 包含:
  * - Google Tag Manager (GTM)
  * - Microsoft Clarity (可选，通过 thirdPartyAnalytics 配置控制)
- *
- * 使用 requestIdleCallback 延迟加载以优化性能
+ * - Umami 页面浏览与统计运行时
  */
 
 interface Props {
@@ -15,6 +14,13 @@ interface Props {
 	thirdPartyAnalytics?: {
 		enable: boolean;
 		clarityId?: string;
+		umami?: {
+			enable: boolean;
+			scriptUrl: string;
+			websiteId: string;
+			shareUrl?: string | false;
+			trackSwupPageviews?: boolean;
+		};
 	};
 }
 
@@ -25,91 +31,393 @@ const {
 
 const clarityEnable =
 	thirdPartyAnalytics.enable && thirdPartyAnalytics.clarityId;
+const umamiConfig = thirdPartyAnalytics.umami;
+const umamiEnable =
+	!!umamiConfig?.enable && !!umamiConfig.scriptUrl && !!umamiConfig.websiteId;
 ---
 
-<!-- 第三方分析脚本 - 仅在用户交互后延迟加载 -->
+<!-- 第三方分析脚本 -->
 <script
 	is:inline
 	define:vars={{
 		gtmId,
 		clarityEnable,
 		clarityId: thirdPartyAnalytics.clarityId || "",
+		umamiEnable,
+		umamiScriptUrl: umamiConfig?.scriptUrl || "",
+		umamiWebsiteId: umamiConfig?.websiteId || "",
+		umamiShareUrl: umamiConfig?.shareUrl || "",
+		umamiTrackSwupPageviews: umamiConfig?.trackSwupPageviews ?? true,
 	}}
 >
 	(function () {
 		// 标记脚本是否已加载
 		window.analyticsLoaded = window.analyticsLoaded || false;
+		window.__umamiScriptLoaded = window.__umamiScriptLoaded || false;
+		window.__umamiSwupHooked = window.__umamiSwupHooked || false;
+		window.__umamiRuntimeInitialized =
+			window.__umamiRuntimeInitialized || false;
+
+		function hookUmamiSwupTracking() {
+			if (window.__umamiSwupHooked) {
+				return;
+			}
+			window.__umamiSwupHooked = true;
+
+			function shouldTrackPageview() {
+				const hostname = window.location.hostname.toLowerCase();
+				return !(
+					hostname === "localhost" ||
+					hostname === "127.0.0.1" ||
+					hostname === "[::1]"
+				);
+			}
+
+			function trackCurrentPage() {
+				if (!shouldTrackPageview()) {
+					return;
+				}
+
+				if (window.umami && typeof window.umami.track === "function") {
+					window.umami.track();
+					setTimeout(function () {
+						if (
+							window.oddmisc &&
+							typeof window.oddmisc.clearCache === "function"
+						) {
+							window.oddmisc.clearCache();
+						}
+						window.dispatchEvent(
+							new CustomEvent("umami:stats-refresh"),
+						);
+					}, 1800);
+				}
+			}
+
+			window.__trackCurrentUmamiPage = trackCurrentPage;
+			document.addEventListener("astro:page-load", trackCurrentPage);
+
+			if (window.swup?.hooks) {
+				window.swup.hooks.on("page:view", trackCurrentPage);
+			} else {
+				document.addEventListener("swup:enable", function () {
+					if (window.swup?.hooks) {
+						window.swup.hooks.on("page:view", trackCurrentPage);
+					}
+				});
+			}
+		}
+
+		function initUmamiRuntime() {
+			if (window.__umamiRuntimeInitialized || !umamiShareUrl) {
+				return;
+			}
+			window.__umamiRuntimeInitialized = true;
+
+			(function () {
+				const SHARE_CONTEXT_HEADER = "x-umami-share-context";
+
+				async function fetchWithTimeout(url, options, timeout) {
+					const controller = new AbortController();
+					const timeoutId = setTimeout(
+						() => controller.abort(),
+						timeout || 10000,
+					);
+					try {
+						return await fetch(url, {
+							...(options || {}),
+							signal: controller.signal,
+						});
+					} finally {
+						clearTimeout(timeoutId);
+					}
+				}
+
+				function extractValue(field) {
+					return typeof field === "number"
+						? field
+						: field && typeof field.value === "number"
+							? field.value
+							: 0;
+				}
+
+				function parseShareUrl(shareUrl) {
+					const parsed = new URL(shareUrl);
+					const pathParts = parsed.pathname.split("/");
+					const shareIndex = pathParts.indexOf("share");
+
+					if (
+						shareIndex === -1 ||
+						shareIndex === pathParts.length - 1
+					) {
+						throw new Error("Invalid Umami share URL");
+					}
+
+					const shareId = pathParts[shareIndex + 1];
+					const apiBase = `${parsed.protocol}//${parsed.host}${pathParts.slice(0, shareIndex).join("/")}/api`;
+					return { apiBase, shareId };
+				}
+
+				class SimpleCache {
+					constructor(storageKey, ttl) {
+						this.storageKey = storageKey;
+						this.ttl = ttl;
+						this.cache = new Map();
+						this.loadFromStorage();
+					}
+
+					loadFromStorage() {
+						try {
+							const stored = localStorage.getItem(
+								this.storageKey,
+							);
+							if (!stored) {
+								return;
+							}
+							const parsed = JSON.parse(stored);
+							for (const [key, entry] of Object.entries(parsed)) {
+								if (
+									entry &&
+									typeof entry.timestamp === "number" &&
+									!this.isExpired(entry.timestamp)
+								) {
+									this.cache.set(key, entry);
+								}
+							}
+						} catch {}
+					}
+
+					saveToStorage() {
+						try {
+							const data = {};
+							this.cache.forEach((value, key) => {
+								data[key] = value;
+							});
+							localStorage.setItem(
+								this.storageKey,
+								JSON.stringify(data),
+							);
+						} catch {}
+					}
+
+					isExpired(timestamp) {
+						return Date.now() - timestamp >= this.ttl;
+					}
+
+					get(key) {
+						const cached = this.cache.get(key);
+						if (cached && !this.isExpired(cached.timestamp)) {
+							return cached.value;
+						}
+						if (cached) {
+							this.cache.delete(key);
+							this.saveToStorage();
+						}
+						return null;
+					}
+
+					set(key, value) {
+						this.cache.set(key, {
+							value,
+							timestamp: Date.now(),
+						});
+						this.saveToStorage();
+					}
+
+					clear() {
+						this.cache.clear();
+						try {
+							localStorage.removeItem(this.storageKey);
+						} catch {}
+					}
+				}
+
+				class UmamiRuntimeClient {
+					constructor(config) {
+						const { apiBase, shareId } = parseShareUrl(
+							config.shareUrl,
+						);
+						this.apiBase = apiBase;
+						this.shareId = shareId;
+						this.cache = new SimpleCache(
+							`umami-runtime-${shareId}`,
+							10 * 60 * 1000,
+						);
+						this.shareData = null;
+						this.sharePromise = null;
+					}
+
+					async getShareData() {
+						if (this.shareData) {
+							return this.shareData;
+						}
+						if (this.sharePromise) {
+							return this.sharePromise;
+						}
+						this.sharePromise = (async () => {
+							const response = await fetchWithTimeout(
+								`${this.apiBase}/share/${this.shareId}`,
+							);
+							if (!response.ok) {
+								this.sharePromise = null;
+								throw new Error(
+									`Failed to fetch Umami share data: ${response.status}`,
+								);
+							}
+							const data = await response.json();
+							this.shareData = data;
+							return data;
+						})();
+						return this.sharePromise;
+					}
+
+					async authedFetch(pathname) {
+						const { websiteId, token } = await this.getShareData();
+						const response = await fetchWithTimeout(
+							`${this.apiBase}/websites/${websiteId}${pathname}`,
+							{
+								headers: {
+									"x-umami-share-token": token,
+									[SHARE_CONTEXT_HEADER]: "1",
+								},
+							},
+						);
+						if (!response.ok) {
+							throw new Error(
+								`Failed to fetch ${pathname}: ${response.status}`,
+							);
+						}
+						return response.json();
+					}
+
+					async getStats(path) {
+						const cacheKey = path ? `stats-${path}` : "stats-site";
+						const cached = this.cache.get(cacheKey);
+						if (cached) {
+							return { ...cached, _fromCache: true };
+						}
+
+						const params = new URLSearchParams({
+							startAt: "0",
+							endAt: Date.now().toString(),
+						});
+						if (path) {
+							params.set("path", `eq.${path}`);
+						}
+
+						const data = await this.authedFetch(
+							`/stats?${params.toString()}`,
+						);
+						const result = {
+							pageviews: extractValue(data.pageviews),
+							visitors: extractValue(data.visitors),
+							visits: extractValue(data.visits),
+						};
+						this.cache.set(cacheKey, result);
+						return result;
+					}
+
+					getSiteStats() {
+						return this.getStats();
+					}
+
+					getPageStats(path) {
+						return this.getStats(path);
+					}
+
+					clearCache() {
+						this.cache.clear();
+						this.shareData = null;
+						this.sharePromise = null;
+					}
+				}
+
+				try {
+					const client = new UmamiRuntimeClient({
+						shareUrl: umamiShareUrl,
+					});
+					window.oddmisc = {
+						umami: client,
+						getStats: (path) => client.getStats(path),
+						getSiteStats: () => client.getSiteStats(),
+						getPageStats: (path) => client.getPageStats(path),
+						clearCache: () => client.clearCache(),
+					};
+				} catch (error) {
+					console.warn(
+						"[umami-runtime] init failed:",
+						error instanceof Error ? error.message : error,
+					);
+				}
+
+				window.dispatchEvent(
+					new CustomEvent("oddmisc-ready", {
+						detail: { client: window.oddmisc },
+					}),
+				);
+				setTimeout(function () {
+					window.dispatchEvent(
+						new CustomEvent("umami:stats-refresh"),
+					);
+				}, 300);
+			})();
+		}
 
 		function loadAnalytics() {
-			if (window.analyticsLoaded) {
-				return;
-			}
-			window.analyticsLoaded = true;
+			// GTM 和 Clarity 仍然只初始化一次
+			if (!window.analyticsLoaded) {
+				window.analyticsLoaded = true;
 
-			// Google Tag Manager
-			(function (w, d, s, l, i) {
-				w[l] = w[l] || [];
-				w[l].push({
-					"gtm.start": new Date().getTime(),
-					event: "gtm.js",
-				});
-				const f = d.getElementsByTagName(s)[0],
-					j = d.createElement(s);
-				j.async = true;
-				j.src = "https://www.googletagmanager.com/gtm.js?id=" + i;
-				f.parentNode.insertBefore(j, f);
-			})(window, document, "script", "dataLayer", gtmId);
+				(function (w, d, s, l, i) {
+					w[l] = w[l] || [];
+					w[l].push({
+						"gtm.start": new Date().getTime(),
+						event: "gtm.js",
+					});
+					const f = d.getElementsByTagName(s)[0],
+						j = d.createElement(s);
+					j.async = true;
+					j.src = "https://www.googletagmanager.com/gtm.js?id=" + i;
+					f.parentNode.insertBefore(j, f);
+				})(window, document, "script", "dataLayer", gtmId);
 
-			// Clarity (仅在启用时加载)
-			if (clarityEnable && clarityId) {
-				(function (c, l, a, r, i, t, y) {
-					c[a] =
-						c[a] ||
-						function () {
-							(c[a].q = c[a].q || []).push(arguments);
-						};
-					t = l.createElement(r);
-					t.async = 1;
-					t.src = "https://www.clarity.ms/tag/" + i;
-					y = l.getElementsByTagName(r)[0];
-					y.parentNode.insertBefore(t, y);
-				})(window, document, "clarity", "script", clarityId);
+				if (clarityEnable && clarityId) {
+					(function (c, l, a, r, i, t, y) {
+						c[a] =
+							c[a] ||
+							function () {
+								(c[a].q = c[a].q || []).push(arguments);
+							};
+						t = l.createElement(r);
+						t.async = 1;
+						t.src = "https://www.clarity.ms/tag/" + i;
+						y = l.getElementsByTagName(r)[0];
+						y.parentNode.insertBefore(t, y);
+					})(window, document, "clarity", "script", clarityId);
+				}
 			}
+
+			if (umamiEnable && !window.__umamiScriptLoaded) {
+				window.__umamiScriptLoaded = true;
+				const script = document.createElement("script");
+				script.defer = true;
+				script.src = umamiScriptUrl;
+				script.setAttribute("data-website-id", umamiWebsiteId);
+				script.setAttribute("data-auto-track", "false");
+				script.onload = function () {
+					if (typeof window.__trackCurrentUmamiPage === "function") {
+						window.__trackCurrentUmamiPage();
+					}
+				};
+				document.head.appendChild(script);
+			}
+
+			if (umamiTrackSwupPageviews) {
+				hookUmamiSwupTracking();
+			}
+			initUmamiRuntime();
 		}
 
-		// 仅在用户交互后加载分析脚本，减少初始页面加载负担
-		const events = [
-			"scroll",
-			"mousemove",
-			"keydown",
-			"touchstart",
-			"click",
-		];
-		let loaded = false;
-
-		function onInteraction() {
-			if (loaded) {
-				return;
-			}
-			loaded = true;
-			events.forEach(function (event) {
-				window.removeEventListener(event, onInteraction);
-			});
-			loadAnalytics();
-		}
-
-		events.forEach(function (event) {
-			window.addEventListener(event, onInteraction, {
-				once: true,
-				passive: true,
-			});
-		});
-
-		// 备用：如果用户 10 秒内没有交互，则在 idle 时加载
-		setTimeout(function () {
-			if (!loaded) {
-				loadAnalytics();
-			}
-		}, 10000);
+		loadAnalytics();
 	})();
 </script>

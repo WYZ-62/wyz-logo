@@ -1,11 +1,12 @@
 ---
 import { PageHeader } from "@components/features/page-header";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { getCategoryList } from "@utils/content-utils";
+import { getTagList } from "@utils/content-utils";
+import { getTagUrl } from "@utils/url-utils";
 
-const categories = await getCategoryList();
-const title = "分类";
-const subtitle = `共 ${categories.length} 个分类，点击后可查看该分类下的文章。`;
+const tags = await getTagList();
+const title = "标签";
+const subtitle = `共 ${tags.length} 个标签，点击后可查看对应文章列表。`;
 ---
 
 <MainGridLayout title={title} description={subtitle}>
@@ -20,44 +21,29 @@ const subtitle = `共 ${categories.length} 个分类，点击后可查看该分�
 			<PageHeader title={title} subtitle={subtitle} />
 
 			{
-				categories.length > 0 ? (
-					<div class="categories-grid">
-						{categories.map((category) => (
+				tags.length > 0 ? (
+					<div class="tags-grid">
+						{tags.map((tag) => (
 							<a
-								href={category.url}
-								class="category-card group"
-								aria-label={`查看 ${category.name} 分类下的全部文章`}
+								href={getTagUrl(tag.name)}
+								class="tag-card group"
+								aria-label={`查看 ${tag.name} 标签下的全部文章`}
 							>
-								<div class="category-card__content">
-									<h2 class="category-card__title">
-										{category.name}
-									</h2>
-									<p class="category-card__count">
-										{category.count} 篇文章
+								<div class="tag-card__content">
+									<h2 class="tag-card__title">{tag.name}</h2>
+									<p class="tag-card__count">
+										{tag.count} 篇文章
 									</p>
 								</div>
-								<div
-									class="category-card__badge"
-									aria-hidden="true"
-								>
-									<svg
-										viewBox="0 0 24 24"
-										class="category-card__badge-icon"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									>
-										<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z" />
-									</svg>
+								<div class="tag-card__badge" aria-hidden="true">
+									#
 								</div>
 							</a>
 						))}
 					</div>
 				) : (
 					<p class="text-black/50 dark:text-white/50">
-						当前还没有可展示的分类。
+						当前还没有可展示的标签。
 					</p>
 				)
 			}
@@ -66,13 +52,13 @@ const subtitle = `共 ${categories.length} 个分类，点击后可查看该分�
 </MainGridLayout>
 
 <style>
-	.categories-grid {
+	.tags-grid {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
 		gap: 1rem;
 	}
 
-	.category-card {
+	.tag-card {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -91,7 +77,7 @@ const subtitle = `共 ${categories.length} 个分类，点击后可查看该分�
 			border-color 0.25s ease;
 	}
 
-	.category-card:hover {
+	.tag-card:hover {
 		transform: translateY(-4px);
 		border-color: color-mix(
 			in srgb,
@@ -101,7 +87,7 @@ const subtitle = `共 ${categories.length} 个分类，点击后可查看该分�
 		box-shadow: 0 20px 38px rgba(15, 23, 42, 0.08);
 	}
 
-	.category-card__content {
+	.tag-card__content {
 		display: flex;
 		flex: 1;
 		flex-direction: column;
@@ -109,7 +95,7 @@ const subtitle = `共 ${categories.length} 个分类，点击后可查看该分�
 		min-width: 0;
 	}
 
-	.category-card__title {
+	.tag-card__title {
 		margin: 0;
 		color: rgba(15, 23, 42, 0.92);
 		font-size: clamp(1.65rem, 2vw, 2rem);
@@ -118,14 +104,14 @@ const subtitle = `共 ${categories.length} 个分类，点击后可查看该分�
 		word-break: break-word;
 	}
 
-	.category-card__count {
+	.tag-card__count {
 		margin: 0.9rem 0 0;
 		color: rgba(15, 23, 42, 0.45);
 		font-size: 1rem;
 		font-weight: 600;
 	}
 
-	.category-card__badge {
+	.tag-card__badge {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -134,6 +120,8 @@ const subtitle = `共 ${categories.length} 个分类，点击后可查看该分�
 		border-radius: 1.25rem;
 		background: var(--btn-regular-bg);
 		color: var(--btn-content);
+		font-size: 2rem;
+		font-weight: 800;
 		flex-shrink: 0;
 		transition:
 			transform 0.25s ease,
@@ -141,60 +129,51 @@ const subtitle = `共 ${categories.length} 个分类，点击后可查看该分�
 			color 0.25s ease;
 	}
 
-	.category-card__badge-icon {
-		width: 1.85rem;
-		height: 1.85rem;
-	}
-
-	.category-card:hover .category-card__badge {
+	.tag-card:hover .tag-card__badge {
 		transform: scale(1.04);
 	}
 
-	:global(.dark) .category-card {
+	:global(.dark) .tag-card {
 		background: color-mix(in srgb, var(--card-bg) 94%, black 6%);
 		box-shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
 	}
 
-	:global(.dark) .category-card__title {
+	:global(.dark) .tag-card__title {
 		color: rgba(255, 255, 255, 0.92);
 	}
 
-	:global(.dark) .category-card__count {
+	:global(.dark) .tag-card__count {
 		color: rgba(255, 255, 255, 0.5);
 	}
 
 	@media (min-width: 768px) {
-		.categories-grid {
+		.tags-grid {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			gap: 1.25rem;
 		}
 	}
 
 	@media (max-width: 640px) {
-		.category-card {
+		.tag-card {
 			min-height: 7rem;
 			padding: 1.25rem;
 			border-radius: 1.4rem;
 		}
 
-		.category-card__title {
+		.tag-card__title {
 			font-size: 1.45rem;
 		}
 
-		.category-card__count {
+		.tag-card__count {
 			margin-top: 0.75rem;
 			font-size: 0.95rem;
 		}
 
-		.category-card__badge {
+		.tag-card__badge {
 			width: 3rem;
 			height: 3rem;
 			border-radius: 1rem;
-		}
-
-		.category-card__badge-icon {
-			width: 1.55rem;
-			height: 1.55rem;
+			font-size: 1.65rem;
 		}
 	}
 </style>

@@ -12,6 +12,7 @@ import {
 } from "@components/features/posts";
 import { ReadingTime, WordCount } from "@components/features/posts/atoms";
 import License from "@components/misc/License.astro";
+import ContentProtection from "@components/misc/ContentProtection.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getRelatedPosts, getSortedPosts } from "@utils/content-utils";
@@ -34,6 +35,7 @@ import {
 import Image from "../../components/atoms/Image/Image.astro";
 import Encryptor from "../../components/features/auth/Encryptor.astro";
 import { profileConfig, siteConfig } from "../../config";
+import { getTopicIdsForPost } from "../../data/topics";
 import { formatDateToYYYYMMDD } from "../../utils/date-utils";
 
 import { getImage } from "astro:assets";
@@ -104,6 +106,7 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
 const { remarkPluginFrontmatter } = await render(entry);
+const topicIds = getTopicIdsForPost(entry);
 
 // 获取相关文章
 const relatedPosts = relatedPostsConfig.enable
@@ -159,7 +162,7 @@ if (entry.data.image) {
 			posterCoverUrl = entry.data.image;
 		}
 	} else {
-		ogCoverUrl = entry.data.image;  // absolute path like "/images/foo.png"
+		ogCoverUrl = entry.data.image; // absolute path like "/images/foo.png"
 	}
 }
 
@@ -229,6 +232,7 @@ const jsonLd = {
 	<script>
 		import("../../scripts/right-sidebar-layout.js");
 	</script>
+	<ContentProtection postSlug={entry.id} topicIds={topicIds} />
 	<div
 		class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative mb-4"
 	>

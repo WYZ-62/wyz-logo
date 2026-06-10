@@ -3,6 +3,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { footerConfig, profileConfig } from "../../../config";
+import I18nKey from "../../../i18n/i18nKey";
+import { i18n } from "../../../i18n/translation";
 import { url } from "../../../utils/url-utils";
 
 const currentYear = new Date().getFullYear();
@@ -45,6 +47,35 @@ if (footerConfig.enable) {
 	<div class="transition text-50 text-sm text-center">
 		{customFooterHtml && <div class="mb-2" set:html={customFooterHtml} />}
 
+		<div
+			class="footer-stats-wrap hidden mb-5 mt-3 w-full max-w-3xl"
+			data-umami-footer-stats
+		>
+			<div class="footer-stats-card">
+				<div class="footer-stats-title">
+					<div class="footer-stats-icon">
+						<span>◔</span>
+					</div>
+					<span>{i18n(I18nKey.siteStats)}</span>
+				</div>
+
+				<div class="footer-stats-pills">
+					<div class="footer-stats-pill">
+						<span>浏览量</span>
+						<strong data-umami-stat="pageviews">—</strong>
+					</div>
+					<div class="footer-stats-pill">
+						<span>访客数</span>
+						<strong data-umami-stat="visitors">—</strong>
+					</div>
+					<div class="footer-stats-pill">
+						<span>访问次数</span>
+						<strong data-umami-stat="visits">—</strong>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<div class="mb-2">
 			&copy; <span id="copyright-year">{currentYear}</span>
 			{profileConfig.name}. All Rights Reserved. /
@@ -86,3 +117,150 @@ if (footerConfig.enable) {
 		</div>
 	</div>
 </div>
+
+<script is:inline>
+	async function initFooterUmamiStats() {
+		const container = document.querySelector("[data-umami-footer-stats]");
+		if (!container) {
+			return;
+		}
+
+		if (!window.oddmisc?.getSiteStats) {
+			setTimeout(initFooterUmamiStats, 600);
+			return;
+		}
+
+		try {
+			const stats = await window.oddmisc.getSiteStats();
+			const pageviews = stats.pageviews || 0;
+			const visitors = stats.visitors || 0;
+			const visits = stats.visits || 0;
+
+			container.classList.remove("hidden");
+
+			const pageviewsEl = container.querySelector(
+				'[data-umami-stat="pageviews"]',
+			);
+			const visitorsEl = container.querySelector(
+				'[data-umami-stat="visitors"]',
+			);
+			const visitsEl = container.querySelector(
+				'[data-umami-stat="visits"]',
+			);
+
+			if (pageviewsEl) {
+				pageviewsEl.textContent = pageviews.toLocaleString();
+			}
+			if (visitorsEl) {
+				visitorsEl.textContent = visitors.toLocaleString();
+			}
+			if (visitsEl) {
+				visitsEl.textContent = visits.toLocaleString();
+			}
+		} catch (error) {
+			console.error("Error fetching footer Umami stats:", error);
+			container.classList.add("hidden");
+		}
+	}
+
+	if (!window.__footerUmamiStatsInitialized) {
+		window.__footerUmamiStatsInitialized = true;
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", initFooterUmamiStats);
+		} else {
+			initFooterUmamiStats();
+		}
+		document.addEventListener("astro:page-load", initFooterUmamiStats);
+		window.addEventListener("oddmisc-ready", initFooterUmamiStats);
+		window.addEventListener("umami:stats-refresh", initFooterUmamiStats);
+	}
+</script>
+
+<style>
+	.footer-stats-card {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1rem 1.2rem;
+		border-radius: 1.4rem;
+		border: 1px dashed color-mix(in srgb, var(--primary) 18%, transparent);
+		background: color-mix(in srgb, var(--btn-regular-bg) 72%, white 28%);
+	}
+
+	.footer-stats-title {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-size: 1.05rem;
+		font-weight: 700;
+		color: rgba(15, 23, 42, 0.8);
+		white-space: nowrap;
+	}
+
+	.footer-stats-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.3rem;
+		height: 2.3rem;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--primary) 14%, white);
+		color: var(--btn-content);
+		font-size: 1rem;
+	}
+
+	.footer-stats-pills {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.8rem;
+	}
+
+	.footer-stats-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.55rem;
+		padding: 0.72rem 1rem;
+		border-radius: 999px;
+		border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+		background: color-mix(in srgb, var(--card-bg) 88%, white 12%);
+		color: rgba(15, 23, 42, 0.65);
+		font-size: 0.95rem;
+	}
+
+	.footer-stats-pill strong {
+		color: var(--btn-content);
+		font-size: 1.05rem;
+		font-weight: 800;
+	}
+
+	:global(.dark) .footer-stats-card {
+		background: color-mix(in srgb, var(--btn-regular-bg) 48%, black 52%);
+	}
+
+	:global(.dark) .footer-stats-title {
+		color: rgba(255, 255, 255, 0.82);
+	}
+
+	:global(.dark) .footer-stats-pill {
+		background: color-mix(in srgb, var(--card-bg) 90%, black 10%);
+		color: rgba(255, 255, 255, 0.65);
+	}
+
+	@media (max-width: 768px) {
+		.footer-stats-card {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.footer-stats-title {
+			justify-content: center;
+		}
+
+		.footer-stats-pills {
+			justify-content: center;
+		}
+	}
+</style>

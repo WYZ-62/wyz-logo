@@ -112,6 +112,19 @@ export const siteConfig: SiteConfig = {
 		useNewStyle: false,
 	},
 
+	// 轻量内容保护配置（仅作用于文章正文区域）
+	contentProtection: {
+		enable: true, // 是否启用内容保护能力
+		mode: "selected", // all=全部文章启用，selected=仅指定文章/专题启用
+		postSlugs: ["logo-story"], // 指定需要启用保护的文章 slug（不带 .md）
+		topicIds: ["engineering-foundation"], // 指定需要启用保护的专题 id
+		disableSelection: true, // 是否禁止正文文本选中
+		disableContextMenu: true, // 是否禁用正文区域右键菜单
+		disableCopy: true, // 是否拦截复制/剪切快捷键与事件
+		disableDevToolsShortcuts: true, // 是否拦截 F12 / Ctrl+Shift+I / Ctrl+U
+		allowCodeCopy: true, // 是否允许代码块继续选中和复制
+	},
+
 	// 壁纸模式配置
 	wallpaperMode: {
 		// 默认壁纸模式：banner=顶部横幅，fullscreen=全屏壁纸，none=无壁纸
@@ -230,6 +243,16 @@ export const siteConfig: SiteConfig = {
 	thirdPartyAnalytics: {
 		enable: false, // 是否启用第三方统计（Microsoft Clarity），默认关闭，启用可能影响 Lighthouse 评分
 		clarityId: "", // Clarity 项目 ID
+		umami: {
+			enable: true,
+			scriptUrl: "https://cloud.umami.is/script.js",
+			websiteId: "71f65064-74c0-49ff-8f0f-949df1ac5aa3",
+			shareUrl:
+				"https://cloud.umami.is/analytics/us/share/WSxYxdMy3vBlQiiy",
+			dashboardUrl:
+				"https://cloud.umami.is/analytics/us/websites/71f65064-74c0-49ff-8f0f-949df1ac5aa3",
+			trackSwupPageviews: true,
+		},
 	},
 };
 export const fullscreenWallpaperConfig: FullscreenWallpaperConfig = {
@@ -275,13 +298,24 @@ export const navBarConfig: NavBarConfig = {
 					external: true,
 					icon: "mdi:git",
 				},
+				{
+					name: "数据统计",
+					url: "https://cloud.umami.is/analytics/us/websites/71f65064-74c0-49ff-8f0f-949df1ac5aa3",
+					external: true,
+					icon: "material-symbols:query-stats",
+				},
 			],
 		},
 		{
-			name: "标签",
+			name: "我的",
 			url: "#",
-			icon: "material-symbols:tag",
+			icon: "material-symbols:person",
 			children: [
+				{
+					name: "标签",
+					url: "/tags/",
+					icon: "material-symbols:tag",
+				},
 				{
 					name: "分类",
 					url: "/categories/",
@@ -293,7 +327,7 @@ export const navBarConfig: NavBarConfig = {
 					icon: "material-symbols:bookmarks-outline",
 				},
 				{
-					name: "日记",
+					name: "随笔",
 					url: "/diary/",
 					icon: "material-symbols:book-outline",
 				},

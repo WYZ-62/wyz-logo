@@ -147,5 +147,9 @@ const {
     } else {
         fetchPageViews();
     }
+
+    window.addEventListener('oddmisc-ready', fetchPageViews);
+    document.addEventListener('astro:page-load', fetchPageViews);
+    window.addEventListener('umami:stats-refresh', fetchPageViews);
 </script>
 )}
