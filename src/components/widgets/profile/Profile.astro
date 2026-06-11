@@ -1,12 +1,9 @@
 ---
 import { Icon } from "astro-icon/components";
-import { profileConfig, siteConfig } from "../../../config";
+import { profileConfig } from "../../../config";
 import TypewriterText from "../../atoms/typewriter-text/TypewriterText.astro";
 import { url } from "../../../utils/url-utils";
 import Image from "../../atoms/Image/Image.astro";
-
-const umamiDashboardUrl =
-	siteConfig.thirdPartyAnalytics?.umami?.dashboardUrl || "";
 ---
 
 <div class="card-base p-3">
@@ -91,113 +88,5 @@ const umamiDashboardUrl =
 				)
 			}
 		</div>
-
-		{
-			umamiDashboardUrl && (
-				<a
-					href={umamiDashboardUrl}
-					target="_blank"
-					rel="noopener noreferrer"
-					class="stats-dashboard-link group"
-					aria-label="查看站点统计后台"
-				>
-					<div class="stats-dashboard-link__icon">
-						<Icon name="material-symbols:query-stats" />
-					</div>
-					<div class="stats-dashboard-link__body">
-						<div class="stats-dashboard-link__title">数据统计</div>
-						<div class="stats-dashboard-link__desc">
-							查看 Umami 站点访问数据
-						</div>
-					</div>
-					<div class="stats-dashboard-link__arrow">
-						<Icon name="fa7-solid:arrow-up-right-from-square" />
-					</div>
-				</a>
-			)
-		}
 	</div>
 </div>
-
-<style>
-	.stats-dashboard-link {
-		display: flex;
-		align-items: center;
-		gap: 0.8rem;
-		width: 100%;
-		margin-top: 0.7rem;
-		padding: 0.85rem 0.95rem;
-		border-radius: 1rem;
-		text-decoration: none;
-		background: color-mix(in srgb, var(--btn-regular-bg) 72%, white 28%);
-		border: 1px solid color-mix(in srgb, var(--primary) 12%, transparent);
-		transition:
-			transform 0.2s ease,
-			border-color 0.2s ease,
-			box-shadow 0.2s ease;
-	}
-
-	.stats-dashboard-link:hover {
-		transform: translateY(-2px);
-		border-color: color-mix(in srgb, var(--primary) 28%, transparent);
-		box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-	}
-
-	.stats-dashboard-link__icon {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 2.6rem;
-		height: 2.6rem;
-		border-radius: 0.95rem;
-		flex-shrink: 0;
-		background: color-mix(in srgb, var(--primary) 12%, white);
-		color: var(--btn-content);
-		font-size: 1.35rem;
-	}
-
-	.stats-dashboard-link__body {
-		flex: 1;
-		min-width: 0;
-		text-align: left;
-	}
-
-	.stats-dashboard-link__title {
-		font-size: 0.98rem;
-		font-weight: 700;
-		color: rgba(15, 23, 42, 0.84);
-	}
-
-	.stats-dashboard-link__desc {
-		margin-top: 0.18rem;
-		font-size: 0.8rem;
-		color: rgba(15, 23, 42, 0.48);
-	}
-
-	.stats-dashboard-link__arrow {
-		flex-shrink: 0;
-		font-size: 0.82rem;
-		color: rgba(15, 23, 42, 0.3);
-		transition: color 0.2s ease;
-	}
-
-	.stats-dashboard-link:hover .stats-dashboard-link__arrow {
-		color: var(--btn-content);
-	}
-
-	:global(.dark) .stats-dashboard-link {
-		background: color-mix(in srgb, var(--btn-regular-bg) 48%, black 52%);
-	}
-
-	:global(.dark) .stats-dashboard-link__title {
-		color: rgba(255, 255, 255, 0.86);
-	}
-
-	:global(.dark) .stats-dashboard-link__desc {
-		color: rgba(255, 255, 255, 0.48);
-	}
-
-	:global(.dark) .stats-dashboard-link__arrow {
-		color: rgba(255, 255, 255, 0.3);
-	}
-</style>
