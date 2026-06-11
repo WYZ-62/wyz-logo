@@ -109,47 +109,120 @@ const {
     pageViewsText: i18n(I18nKey.profileStatsPageViews),
     visitsText: i18n(I18nKey.profileStatsVisits)
 }}>
-    function generateStatsText(pageViews, visits) {
-        return `${pageViewsText} ${pageViews} · ${visitsText} ${visits}`;
-    }
-
-    async function fetchPageViews() {
-        const container = document.querySelector('.umami-page-views');
-        
-        if (!window.oddmisc) {
-            container?.classList.add('hidden');
-            return;
+    (function () {
+        if (window.__umamiPostMetaController?.cleanup) {
+            window.__umamiPostMetaController.cleanup();
         }
 
-        const pagePath = container?.dataset.path;
-        if (!pagePath) {return;}
+        let retryTimer = null;
+        const state = {
+            pageviews: 0,
+            visits: 0,
+        };
 
-        try {
-            const stats = await window.oddmisc.getStats(pagePath);
-            const pageViews = stats.pageviews || 0;
-            const visits = stats.visits || 0;
+        function normalizePath(pathname) {
+            let normalized = pathname || "/";
 
-            if (pageViews === 0 && visits === 0) {
-                container?.classList.add('hidden');
+            try {
+                normalized = new URL(normalized, window.location.origin).pathname;
+            } catch {}
+
+            if (normalized !== "/") {
+                normalized = `${normalized.replace(/\/+$/, "")}/`;
+            }
+
+            return normalized || "/";
+        }
+
+        function getContainer() {
+            return document.querySelector(".umami-page-views");
+        }
+
+        function getPagePath() {
+            return normalizePath(getContainer()?.dataset.path || "");
+        }
+
+        function generateStatsText(pageViews, visits) {
+            return `${pageViewsText} ${pageViews} · ${visitsText} ${visits}`;
+        }
+
+        function renderStats() {
+            const container = getContainer();
+            if (!container) {
                 return;
             }
 
-            container?.classList.remove('hidden');
-            container.querySelector('.page-views-display').textContent = generateStatsText(pageViews, visits);
-        } catch (error) {
-            console.error('Error fetching page views:', error);
-            container?.classList.add('hidden');
+            container.classList.remove("hidden");
+            const display = container.querySelector(".page-views-display");
+            if (display) {
+                display.textContent = generateStatsText(
+                    state.pageviews,
+                    state.visits,
+                );
+            }
         }
-    }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', fetchPageViews);
-    } else {
-        fetchPageViews();
-    }
+        function scheduleRetry(options) {
+            if (retryTimer) {
+                window.clearTimeout(retryTimer);
+            }
 
-    window.addEventListener('oddmisc-ready', fetchPageViews);
-    document.addEventListener('astro:page-load', fetchPageViews);
-    window.addEventListener('umami:stats-refresh', fetchPageViews);
+            retryTimer = window.setTimeout(function () {
+                fetchPageViews(options);
+            }, 600);
+        }
+
+        async function fetchPageViews(options) {
+            const container = getContainer();
+            if (!container) {
+                return;
+            }
+
+            const path = getPagePath();
+            if (!path) {
+                return;
+            }
+
+            if (!window.oddmisc?.getStats) {
+                scheduleRetry(options);
+                return;
+            }
+
+            try {
+                const stats = await window.oddmisc.getStats(path, options || {});
+                state.pageviews = stats.pageviews || 0;
+                state.visits = stats.visits || 0;
+                renderStats();
+            } catch (error) {
+                console.error("Error fetching page views:", error);
+                container.classList.add("hidden");
+            }
+        }
+
+        function handleInitialLoad() {
+            fetchPageViews();
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", handleInitialLoad);
+        } else {
+            handleInitialLoad();
+        }
+
+        window.addEventListener("oddmisc-ready", handleInitialLoad);
+        document.addEventListener("astro:page-load", handleInitialLoad);
+
+        window.__umamiPostMetaController = {
+            cleanup() {
+                if (retryTimer) {
+                    window.clearTimeout(retryTimer);
+                    retryTimer = null;
+                }
+                document.removeEventListener("DOMContentLoaded", handleInitialLoad);
+                window.removeEventListener("oddmisc-ready", handleInitialLoad);
+                document.removeEventListener("astro:page-load", handleInitialLoad);
+            },
+        };
+    })();
 </script>
 )}

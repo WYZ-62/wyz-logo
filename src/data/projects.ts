@@ -30,7 +30,7 @@ export const projectsData: Project[] = [
 		techStack: ["Astro", "TypeScript", "Tailwind CSS", "Svelte"],
 		status: "completed",
 		sourceCode: "https://github.com/LyraVoid/Mizuki",
-		visitUrl: "https://mizuki.mysqil.com",
+		visitUrl: "https://wyz.sakura-v.cn",
 		startDate: "2024-01-01",
 		endDate: "2024-06-01",
 		featured: true,

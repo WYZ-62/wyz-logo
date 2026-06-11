@@ -9,7 +9,7 @@ tags: [EdgeOne, Astro]
 category: 部署
 author: WYZ
 draft: false
-sourceLink: "https://ynga.kingcola-icg.cn/posts/edgeone-pages-deploy/"
+sourceLink: "https://wyz.sakura-v.cn/posts/edgeone-pages-deploy/"
 ---
 
 # 我是怎么把博客部署到 EdgeOne Pages 的

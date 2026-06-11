@@ -9,7 +9,6 @@ import {
 	getSortedPosts,
 	getTagList,
 } from "../../../utils/content-utils";
-import { getPostUrl } from "../../../utils/url-utils";
 import WidgetLayout from "../common/WidgetLayout.astro";
 
 interface Props {
@@ -25,7 +24,6 @@ const umamiShareUrl = Boolean(siteConfig.thirdPartyAnalytics?.umami?.shareUrl);
 
 // 获取所有文章
 const posts = await getSortedPosts();
-const articlePaths = posts.map((post) => getPostUrl(post));
 const categories = await getCategoryList();
 const tags = await getTagList();
 
@@ -172,9 +170,9 @@ const stats = [
 		siteStartDate,
 		lastPostDate,
 		umamiShareUrl: Boolean(umamiShareUrl),
-		articlePaths,
 	}}
 >
+	(function () {
 	function updateDynamicStats() {
 		const today = new Date();
 
@@ -213,7 +211,17 @@ const stats = [
 		}
 	}
 
-	async function updateUmamiStats() {
+	function renderTotalViews(totalViews) {
+		const totalViewsElements = document.querySelectorAll(
+			'[data-stat-id="total-views"]',
+		);
+
+		totalViewsElements.forEach((element) => {
+			element.textContent = totalViews.toLocaleString();
+		});
+	}
+
+	async function updateUmamiStats(options) {
 		if (!umamiShareUrl) {
 			return;
 		}
@@ -231,16 +239,8 @@ const stats = [
 		}
 
 		try {
-			const articleStats = await Promise.all(
-				articlePaths.map((path) => window.oddmisc.getPageStats(path)),
-			);
-			const totalViews = articleStats.reduce(
-				(sum, stat) => sum + (stat.pageviews || 0),
-				0,
-			);
-			totalViewsElements.forEach((element) => {
-				element.textContent = totalViews.toLocaleString();
-			});
+			const stats = await window.oddmisc.getSiteStats(options || {});
+			renderTotalViews(stats.pageviews || 0);
 		} catch (error) {
 			console.error("Error fetching site stats:", error);
 		}
@@ -249,10 +249,13 @@ const stats = [
 	// 页面加载时更新
 	updateDynamicStats();
 	updateUmamiStats();
-	window.addEventListener("oddmisc-ready", updateUmamiStats);
-	window.addEventListener("umami:stats-refresh", updateUmamiStats);
+	if (!window.__siteStatsUmamiInitialized) {
+		window.__siteStatsUmamiInitialized = true;
+		window.addEventListener("oddmisc-ready", () => updateUmamiStats());
+	}
 
 	// 每小时更新一次（可选，因为天数变化较慢）
 	setInterval(updateDynamicStats, 60 * 60 * 1000);
 	setInterval(updateUmamiStats, 10 * 60 * 1000);
+	})();
 </script>

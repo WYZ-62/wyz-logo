@@ -80,17 +80,6 @@ const umamiEnable =
 
 				if (window.umami && typeof window.umami.track === "function") {
 					window.umami.track();
-					setTimeout(function () {
-						if (
-							window.oddmisc &&
-							typeof window.oddmisc.clearCache === "function"
-						) {
-							window.oddmisc.clearCache();
-						}
-						window.dispatchEvent(
-							new CustomEvent("umami:stats-refresh"),
-						);
-					}, 1800);
 				}
 			}
 
@@ -290,9 +279,10 @@ const umamiEnable =
 						return response.json();
 					}
 
-					async getStats(path) {
+					async getStats(path, options) {
+						const { force = false } = options || {};
 						const cacheKey = path ? `stats-${path}` : "stats-site";
-						const cached = this.cache.get(cacheKey);
+						const cached = !force ? this.cache.get(cacheKey) : null;
 						if (cached) {
 							return { ...cached, _fromCache: true };
 						}
@@ -317,12 +307,12 @@ const umamiEnable =
 						return result;
 					}
 
-					getSiteStats() {
-						return this.getStats();
+					getSiteStats(options) {
+						return this.getStats(undefined, options);
 					}
 
-					getPageStats(path) {
-						return this.getStats(path);
+					getPageStats(path, options) {
+						return this.getStats(path, options);
 					}
 
 					clearCache() {
@@ -338,9 +328,12 @@ const umamiEnable =
 					});
 					window.oddmisc = {
 						umami: client,
-						getStats: (path) => client.getStats(path),
-						getSiteStats: () => client.getSiteStats(),
-						getPageStats: (path) => client.getPageStats(path),
+						getStats: (path, options) =>
+							client.getStats(path, options),
+						getSiteStats: (options) =>
+							client.getSiteStats(options),
+						getPageStats: (path, options) =>
+							client.getPageStats(path, options),
 						clearCache: () => client.clearCache(),
 					};
 				} catch (error) {
@@ -355,11 +348,6 @@ const umamiEnable =
 						detail: { client: window.oddmisc },
 					}),
 				);
-				setTimeout(function () {
-					window.dispatchEvent(
-						new CustomEvent("umami:stats-refresh"),
-					);
-				}, 300);
 			})();
 		}
 

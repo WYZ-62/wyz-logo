@@ -1,5 +1,32 @@
 export {};
 
+interface OddmiscStatsOptions {
+	force?: boolean;
+}
+
+interface OddmiscStatsResponse {
+	pageviews: number;
+	visitors: number;
+	visits: number;
+	_fromCache?: boolean;
+}
+
+interface OddmiscClient {
+	umami?: unknown;
+	getStats: (
+		path?: string,
+		options?: OddmiscStatsOptions,
+	) => Promise<OddmiscStatsResponse>;
+	getSiteStats: (
+		options?: OddmiscStatsOptions,
+	) => Promise<OddmiscStatsResponse>;
+	getPageStats: (
+		path: string,
+		options?: OddmiscStatsOptions,
+	) => Promise<OddmiscStatsResponse>;
+	clearCache: () => void;
+}
+
 declare global {
 	interface HTMLElementTagNameMap {
 		"table-of-contents": HTMLElement & {
@@ -46,6 +73,10 @@ declare global {
 
 	interface Window {
 		swup: Swup | undefined;
+		umami?: {
+			track: () => void;
+		};
+		oddmisc?: OddmiscClient;
 		closeAnnouncement: () => void;
 		pagefind: {
 			search: (query: string) => Promise<{
@@ -90,6 +121,16 @@ declare global {
 		__mizukiRightSidebarResizeHandler?: () => void;
 		__mizukiRightSidebarSwupHooked?: boolean;
 		__mizukiRightSidebarManagerInitialized?: boolean;
+		analyticsLoaded?: boolean;
+		__umamiScriptLoaded?: boolean;
+		__umamiSwupHooked?: boolean;
+		__umamiRuntimeInitialized?: boolean;
+		__trackCurrentUmamiPage?: () => void;
+		__siteStatsUmamiInitialized?: boolean;
+		__footerUmamiStatsInitialized?: boolean;
+		__umamiPostMetaController?: {
+			cleanup: () => void;
+		};
 	}
 
 	interface Fancybox {

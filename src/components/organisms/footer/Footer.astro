@@ -119,7 +119,7 @@ if (footerConfig.enable) {
 </div>
 
 <script is:inline>
-	async function initFooterUmamiStats() {
+	async function initFooterUmamiStats(options) {
 		const container = document.querySelector("[data-umami-footer-stats]");
 		if (!container) {
 			return;
@@ -131,7 +131,7 @@ if (footerConfig.enable) {
 		}
 
 		try {
-			const stats = await window.oddmisc.getSiteStats();
+			const stats = await window.oddmisc.getSiteStats(options || {});
 			const pageviews = stats.pageviews || 0;
 			const visitors = stats.visitors || 0;
 			const visits = stats.visits || 0;
@@ -166,13 +166,14 @@ if (footerConfig.enable) {
 	if (!window.__footerUmamiStatsInitialized) {
 		window.__footerUmamiStatsInitialized = true;
 		if (document.readyState === "loading") {
-			document.addEventListener("DOMContentLoaded", initFooterUmamiStats);
+			document.addEventListener("DOMContentLoaded", () =>
+				initFooterUmamiStats(),
+			);
 		} else {
 			initFooterUmamiStats();
 		}
 		document.addEventListener("astro:page-load", initFooterUmamiStats);
 		window.addEventListener("oddmisc-ready", initFooterUmamiStats);
-		window.addEventListener("umami:stats-refresh", initFooterUmamiStats);
 	}
 </script>
 
