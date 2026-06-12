@@ -127,7 +127,6 @@ const {
             pageviews: 0,
             visits: 0,
         };
-        let lastTrackedAt = 0;
 
         function normalizePath(pathname) {
             let normalized = pathname || "/";
@@ -171,30 +170,6 @@ const {
             }
         }
 
-        function applyOptimisticPageview(trackedAt) {
-            const effectiveTrackedAt = trackedAt || Date.now();
-            if (effectiveTrackedAt <= lastTrackedAt) {
-                return;
-            }
-
-            lastTrackedAt = effectiveTrackedAt;
-            state.pageviews += 1;
-            renderStats();
-        }
-
-        function maybeApplyRecentPageview() {
-            const trackedPath = normalizePath(window.__umamiLastTrackedPath || "");
-            const trackedAt = window.__umamiLastTrackedAt || 0;
-
-            if (
-                trackedPath === getPagePath() &&
-                trackedAt > 0 &&
-                Date.now() - trackedAt < 20000
-            ) {
-                applyOptimisticPageview(trackedAt);
-            }
-        }
-
         function scheduleRetry(options) {
             if (retryTimer) {
                 window.clearTimeout(retryTimer);
@@ -223,8 +198,8 @@ const {
 
             try {
                 const stats = await window.oddmisc.getStats(path, options || {});
-                state.pageviews = Math.max(state.pageviews, stats.pageviews || 0);
-                state.visits = Math.max(state.visits, stats.visits || 0);
+                state.pageviews = stats.pageviews || 0;
+                state.visits = stats.visits || 0;
                 renderStats();
             } catch (error) {
                 console.error("Error fetching page views:", error);
@@ -232,21 +207,11 @@ const {
             }
         }
 
-        function handleTracked(event) {
-            const trackedPath = normalizePath(event?.detail?.pathname || "");
-            if (trackedPath !== getPagePath()) {
-                return;
-            }
-
-            applyOptimisticPageview(event?.detail?.trackedAt);
-        }
-
         function handleStatsRefresh() {
             fetchPageViews({ force: true });
         }
 
         function handleInitialLoad() {
-            maybeApplyRecentPageview();
             fetchPageViews();
         }
 
@@ -258,7 +223,6 @@ const {
 
         window.addEventListener("oddmisc-ready", handleInitialLoad);
         document.addEventListener("astro:page-load", handleInitialLoad);
-        window.addEventListener("umami:pageview-tracked", handleTracked);
         window.addEventListener("umami:stats-refresh", handleStatsRefresh);
 
         window.__umamiPostMetaController = {
@@ -270,7 +234,6 @@ const {
                 document.removeEventListener("DOMContentLoaded", handleInitialLoad);
                 window.removeEventListener("oddmisc-ready", handleInitialLoad);
                 document.removeEventListener("astro:page-load", handleInitialLoad);
-                window.removeEventListener("umami:pageview-tracked", handleTracked);
                 window.removeEventListener("umami:stats-refresh", handleStatsRefresh);
             },
         };

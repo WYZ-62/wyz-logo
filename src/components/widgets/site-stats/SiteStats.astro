@@ -182,6 +182,9 @@ const stats = [
 	}}
 >
 	(function () {
+	const TOTAL_VIEWS_CACHE_KEY = "mizuki-content-total-views-v1";
+	const TOTAL_VIEWS_CACHE_TTL = 10 * 60 * 1000;
+	const FETCH_CONCURRENCY = 4;
 	function normalizePath(pathname) {
 		let normalized = pathname || "/";
 
@@ -199,8 +202,9 @@ const stats = [
 	const normalizedContentPaths = contentPaths.map((path) =>
 		normalizePath(path),
 	);
-	const contentPathSet = new Set(normalizedContentPaths);
-	let lastTrackedAt = 0;
+	const uniqueContentPaths = Array.from(new Set(normalizedContentPaths));
+	let updateRequestId = 0;
+	let retryTimer = null;
 
 	function updateDynamicStats() {
 		const today = new Date();
@@ -253,7 +257,7 @@ const stats = [
 	function readDisplayedTotalViews() {
 		const element = document.querySelector('[data-stat-id="total-views"]');
 		if (!element) {
-			return 0;
+			return null;
 		}
 
 		const currentValue = Number.parseInt(
@@ -261,30 +265,76 @@ const stats = [
 			10,
 		);
 
-		return Number.isFinite(currentValue) ? currentValue : 0;
+		return Number.isFinite(currentValue) ? currentValue : null;
 	}
 
-	function applyOptimisticPageview(trackedAt) {
-		const effectiveTrackedAt = trackedAt || Date.now();
-		if (effectiveTrackedAt <= lastTrackedAt) {
-			return;
-		}
+	function readCachedTotalViews() {
+		try {
+			const raw = localStorage.getItem(TOTAL_VIEWS_CACHE_KEY);
+			if (!raw) {
+				return null;
+			}
 
-		lastTrackedAt = effectiveTrackedAt;
-		renderTotalViews(readDisplayedTotalViews() + 1);
+			const parsed = JSON.parse(raw);
+			if (
+				typeof parsed?.value === "number" &&
+				typeof parsed?.timestamp === "number" &&
+				Date.now() - parsed.timestamp < TOTAL_VIEWS_CACHE_TTL
+			) {
+				return parsed.value;
+			}
+		} catch {}
+
+		return null;
 	}
 
-	function maybeApplyRecentPageview() {
-		const trackedPath = normalizePath(window.__umamiLastTrackedPath || "");
-		const trackedAt = window.__umamiLastTrackedAt || 0;
+	function writeCachedTotalViews(totalViews) {
+		try {
+			localStorage.setItem(
+				TOTAL_VIEWS_CACHE_KEY,
+				JSON.stringify({
+					value: totalViews,
+					timestamp: Date.now(),
+				}),
+			);
+		} catch {}
+	}
 
-		if (
-			contentPathSet.has(trackedPath) &&
-			trackedAt > 0 &&
-			Date.now() - trackedAt < 20000
-		) {
-			applyOptimisticPageview(trackedAt);
+	function scheduleRetry(options, delayMs = 2000) {
+		if (retryTimer) {
+			window.clearTimeout(retryTimer);
 		}
+
+		retryTimer = window.setTimeout(() => {
+			updateUmamiStats(options);
+		}, delayMs);
+	}
+
+	async function fetchContentStats(options) {
+		const results = new Array(uniqueContentPaths.length);
+		let cursor = 0;
+
+		async function worker() {
+			while (cursor < uniqueContentPaths.length) {
+				const currentIndex = cursor++;
+				const path = uniqueContentPaths[currentIndex];
+				try {
+					results[currentIndex] = await window.oddmisc.getPageStats(
+						path,
+						options || {},
+					);
+				} catch (error) {
+					results[currentIndex] = { error };
+				}
+			}
+		}
+
+		const workers = Array.from(
+			{ length: Math.min(FETCH_CONCURRENCY, uniqueContentPaths.length) },
+			() => worker(),
+		);
+		await Promise.all(workers);
+		return results;
 	}
 
 	async function updateUmamiStats(options) {
@@ -299,44 +349,59 @@ const stats = [
 			return;
 		}
 
-		if (!window.oddmisc?.getSiteStats) {
-			setTimeout(updateUmamiStats, 600);
+		if (!window.oddmisc?.getPageStats) {
+			scheduleRetry(options, 600);
 			return;
 		}
+
+		const requestId = ++updateRequestId;
 
 		try {
-			const contentStats = await Promise.all(
-				normalizedContentPaths.map((path) =>
-					window.oddmisc.getPageStats(path, options || {}),
-				),
-			);
+			const contentStats = await fetchContentStats(options);
+			if (requestId !== updateRequestId) {
+				return;
+			}
+
+			const failedCount = contentStats.filter((stat) => stat?.error).length;
+			if (failedCount > 0) {
+				if (readDisplayedTotalViews() === null) {
+					const cachedTotal = readCachedTotalViews();
+					if (cachedTotal !== null) {
+						renderTotalViews(cachedTotal);
+					}
+				}
+				scheduleRetry({ force: true }, 3000);
+				return;
+			}
+
 			const totalViews = contentStats.reduce(
-				(sum, stat) => sum + (stat.pageviews || 0),
+				(sum, stat) => sum + (stat?.pageviews || 0),
 				0,
 			);
-			renderTotalViews(Math.max(readDisplayedTotalViews(), totalViews));
+			renderTotalViews(totalViews);
+			writeCachedTotalViews(totalViews);
 		} catch (error) {
 			console.error("Error fetching site stats:", error);
+			if (readDisplayedTotalViews() === null) {
+				const cachedTotal = readCachedTotalViews();
+				if (cachedTotal !== null) {
+					renderTotalViews(cachedTotal);
+				}
+			}
+			scheduleRetry({ force: true }, 3000);
 		}
-	}
-
-	function handleTracked(event) {
-		const trackedPath = normalizePath(event?.detail?.pathname || "");
-		if (!contentPathSet.has(trackedPath)) {
-			return;
-		}
-
-		applyOptimisticPageview(event?.detail?.trackedAt);
 	}
 
 	// 页面加载时更新
 	updateDynamicStats();
-	maybeApplyRecentPageview();
+	const cachedTotalViews = readCachedTotalViews();
+	if (cachedTotalViews !== null) {
+		renderTotalViews(cachedTotalViews);
+	}
 	updateUmamiStats();
 	if (!window.__siteStatsUmamiInitialized) {
 		window.__siteStatsUmamiInitialized = true;
 		window.addEventListener("oddmisc-ready", () => updateUmamiStats());
-		window.addEventListener("umami:pageview-tracked", handleTracked);
 		window.addEventListener("umami:stats-refresh", () =>
 			updateUmamiStats({ force: true }),
 		);

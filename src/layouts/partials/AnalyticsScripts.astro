@@ -61,7 +61,7 @@ const umamiEnable =
 			window.__umamiStatsRefreshTimers || [];
 
 		const UMAMI_DUPLICATE_WINDOW_MS = 1200;
-		const UMAMI_REFRESH_DELAYS = [500, 2000, 5000];
+		const UMAMI_REFRESH_DELAYS = [2000, 8000];
 
 		function normalizePathname(pathname) {
 			let normalized = pathname || "/";
@@ -151,14 +151,6 @@ const umamiEnable =
 					window.__umamiLastTrackedPath = pathname;
 					window.__umamiLastTrackedAt = now;
 					window.umami.track();
-					window.dispatchEvent(
-						new CustomEvent("umami:pageview-tracked", {
-							detail: {
-								pathname,
-								trackedAt: now,
-							},
-						}),
-					);
 					scheduleStatsRefreshes(pathname);
 				}
 			}
