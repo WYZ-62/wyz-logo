@@ -12,7 +12,7 @@ import { ReadingTime } from "./atoms";
 import { EncryptedBadge } from "./atoms";
 
 interface Props {
-	published: Date;
+	published?: Date;
 	updated?: Date;
 	category?: string;
 	tags?: string[];
@@ -27,6 +27,8 @@ interface Props {
 	showWordCount?: boolean;
 	showReadingTime?: boolean;
 	showEncrypted?: boolean;
+	showPublishedDate?: boolean;
+	showCategory?: boolean;
 }
 
 const {
@@ -45,13 +47,17 @@ const {
 	showWordCount = false,
 	showReadingTime = false,
 	showEncrypted = false,
+	showPublishedDate = true,
+	showCategory = true,
 } = Astro.props;
 ---
 
 <div class:list={["flex flex-wrap text-neutral-500 dark:text-neutral-400 items-center gap-4 gap-x-4 gap-y-2", className]}>
-    <PublishedDate date={published} />
+    {showPublishedDate && published && (
+        <PublishedDate date={published} />
+    )}
 
-    {!hideUpdateDate && updated && updated.getTime() !== published.getTime() && (
+    {!hideUpdateDate && published && updated && updated.getTime() !== published.getTime() && (
         <div class="flex items-center">
             <div class="meta-icon">
                 <Icon name="material-symbols:edit-calendar-outline-rounded" class="text-xl"></Icon>
@@ -60,7 +66,9 @@ const {
         </div>
     )}
 
-    <Category category={category} />
+    {showCategory && (
+        <Category category={category} />
+    )}
 
     {showWordCount && words && (
         <WordCount words={words} />
@@ -119,6 +127,7 @@ const {
             pageviews: 0,
             visits: 0,
         };
+        let lastTrackedAt = 0;
 
         function normalizePath(pathname) {
             let normalized = pathname || "/";
@@ -162,6 +171,30 @@ const {
             }
         }
 
+        function applyOptimisticPageview(trackedAt) {
+            const effectiveTrackedAt = trackedAt || Date.now();
+            if (effectiveTrackedAt <= lastTrackedAt) {
+                return;
+            }
+
+            lastTrackedAt = effectiveTrackedAt;
+            state.pageviews += 1;
+            renderStats();
+        }
+
+        function maybeApplyRecentPageview() {
+            const trackedPath = normalizePath(window.__umamiLastTrackedPath || "");
+            const trackedAt = window.__umamiLastTrackedAt || 0;
+
+            if (
+                trackedPath === getPagePath() &&
+                trackedAt > 0 &&
+                Date.now() - trackedAt < 20000
+            ) {
+                applyOptimisticPageview(trackedAt);
+            }
+        }
+
         function scheduleRetry(options) {
             if (retryTimer) {
                 window.clearTimeout(retryTimer);
@@ -190,8 +223,8 @@ const {
 
             try {
                 const stats = await window.oddmisc.getStats(path, options || {});
-                state.pageviews = stats.pageviews || 0;
-                state.visits = stats.visits || 0;
+                state.pageviews = Math.max(state.pageviews, stats.pageviews || 0);
+                state.visits = Math.max(state.visits, stats.visits || 0);
                 renderStats();
             } catch (error) {
                 console.error("Error fetching page views:", error);
@@ -199,7 +232,21 @@ const {
             }
         }
 
+        function handleTracked(event) {
+            const trackedPath = normalizePath(event?.detail?.pathname || "");
+            if (trackedPath !== getPagePath()) {
+                return;
+            }
+
+            applyOptimisticPageview(event?.detail?.trackedAt);
+        }
+
+        function handleStatsRefresh() {
+            fetchPageViews({ force: true });
+        }
+
         function handleInitialLoad() {
+            maybeApplyRecentPageview();
             fetchPageViews();
         }
 
@@ -211,6 +258,8 @@ const {
 
         window.addEventListener("oddmisc-ready", handleInitialLoad);
         document.addEventListener("astro:page-load", handleInitialLoad);
+        window.addEventListener("umami:pageview-tracked", handleTracked);
+        window.addEventListener("umami:stats-refresh", handleStatsRefresh);
 
         window.__umamiPostMetaController = {
             cleanup() {
@@ -221,6 +270,8 @@ const {
                 document.removeEventListener("DOMContentLoaded", handleInitialLoad);
                 window.removeEventListener("oddmisc-ready", handleInitialLoad);
                 document.removeEventListener("astro:page-load", handleInitialLoad);
+                window.removeEventListener("umami:pageview-tracked", handleTracked);
+                window.removeEventListener("umami:stats-refresh", handleStatsRefresh);
             },
         };
     })();

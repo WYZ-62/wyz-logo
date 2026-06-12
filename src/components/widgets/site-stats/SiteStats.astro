@@ -5,10 +5,13 @@ import { siteConfig } from "../../../config";
 import I18nKey from "../../../i18n/i18nKey";
 import { i18n } from "../../../i18n/translation";
 import {
+	getSortedPostsList,
 	getCategoryList,
 	getSortedPosts,
 	getTagList,
 } from "../../../utils/content-utils";
+import { buildTopics } from "../../../data/topics";
+import { getPostUrl, getTopicUrl } from "../../../utils/url-utils";
 import WidgetLayout from "../common/WidgetLayout.astro";
 
 interface Props {
@@ -24,6 +27,11 @@ const umamiShareUrl = Boolean(siteConfig.thirdPartyAnalytics?.umami?.shareUrl);
 
 // 获取所有文章
 const posts = await getSortedPosts();
+const topics = buildTopics(await getSortedPostsList());
+const contentPaths = [
+	...posts.map((post) => getPostUrl(post)),
+	...topics.map((topic) => getTopicUrl(topic.id)),
+];
 const categories = await getCategoryList();
 const tags = await getTagList();
 
@@ -170,9 +178,30 @@ const stats = [
 		siteStartDate,
 		lastPostDate,
 		umamiShareUrl: Boolean(umamiShareUrl),
+		contentPaths,
 	}}
 >
 	(function () {
+	function normalizePath(pathname) {
+		let normalized = pathname || "/";
+
+		try {
+			normalized = new URL(normalized, window.location.origin).pathname;
+		} catch {}
+
+		if (normalized !== "/") {
+			normalized = `${normalized.replace(/\/+$/, "")}/`;
+		}
+
+		return normalized || "/";
+	}
+
+	const normalizedContentPaths = contentPaths.map((path) =>
+		normalizePath(path),
+	);
+	const contentPathSet = new Set(normalizedContentPaths);
+	let lastTrackedAt = 0;
+
 	function updateDynamicStats() {
 		const today = new Date();
 
@@ -221,6 +250,43 @@ const stats = [
 		});
 	}
 
+	function readDisplayedTotalViews() {
+		const element = document.querySelector('[data-stat-id="total-views"]');
+		if (!element) {
+			return 0;
+		}
+
+		const currentValue = Number.parseInt(
+			(element.textContent || "0").replace(/,/g, ""),
+			10,
+		);
+
+		return Number.isFinite(currentValue) ? currentValue : 0;
+	}
+
+	function applyOptimisticPageview(trackedAt) {
+		const effectiveTrackedAt = trackedAt || Date.now();
+		if (effectiveTrackedAt <= lastTrackedAt) {
+			return;
+		}
+
+		lastTrackedAt = effectiveTrackedAt;
+		renderTotalViews(readDisplayedTotalViews() + 1);
+	}
+
+	function maybeApplyRecentPageview() {
+		const trackedPath = normalizePath(window.__umamiLastTrackedPath || "");
+		const trackedAt = window.__umamiLastTrackedAt || 0;
+
+		if (
+			contentPathSet.has(trackedPath) &&
+			trackedAt > 0 &&
+			Date.now() - trackedAt < 20000
+		) {
+			applyOptimisticPageview(trackedAt);
+		}
+	}
+
 	async function updateUmamiStats(options) {
 		if (!umamiShareUrl) {
 			return;
@@ -239,19 +305,41 @@ const stats = [
 		}
 
 		try {
-			const stats = await window.oddmisc.getSiteStats(options || {});
-			renderTotalViews(stats.pageviews || 0);
+			const contentStats = await Promise.all(
+				normalizedContentPaths.map((path) =>
+					window.oddmisc.getPageStats(path, options || {}),
+				),
+			);
+			const totalViews = contentStats.reduce(
+				(sum, stat) => sum + (stat.pageviews || 0),
+				0,
+			);
+			renderTotalViews(Math.max(readDisplayedTotalViews(), totalViews));
 		} catch (error) {
 			console.error("Error fetching site stats:", error);
 		}
 	}
 
+	function handleTracked(event) {
+		const trackedPath = normalizePath(event?.detail?.pathname || "");
+		if (!contentPathSet.has(trackedPath)) {
+			return;
+		}
+
+		applyOptimisticPageview(event?.detail?.trackedAt);
+	}
+
 	// 页面加载时更新
 	updateDynamicStats();
+	maybeApplyRecentPageview();
 	updateUmamiStats();
 	if (!window.__siteStatsUmamiInitialized) {
 		window.__siteStatsUmamiInitialized = true;
 		window.addEventListener("oddmisc-ready", () => updateUmamiStats());
+		window.addEventListener("umami:pageview-tracked", handleTracked);
+		window.addEventListener("umami:stats-refresh", () =>
+			updateUmamiStats({ force: true }),
+		);
 	}
 
 	// 每小时更新一次（可选，因为天数变化较慢）

@@ -57,6 +57,63 @@ const umamiEnable =
 		window.__umamiSwupHooked = window.__umamiSwupHooked || false;
 		window.__umamiRuntimeInitialized =
 			window.__umamiRuntimeInitialized || false;
+		window.__umamiStatsRefreshTimers =
+			window.__umamiStatsRefreshTimers || [];
+
+		const UMAMI_DUPLICATE_WINDOW_MS = 1200;
+		const UMAMI_REFRESH_DELAYS = [500, 2000, 5000];
+
+		function normalizePathname(pathname) {
+			let normalized = pathname || "/";
+
+			try {
+				normalized = new URL(normalized, window.location.origin)
+					.pathname;
+			} catch {}
+
+			if (normalized !== "/") {
+				normalized = `${normalized.replace(/\/+$/, "")}/`;
+			}
+
+			return normalized || "/";
+		}
+
+		function clearPendingStatsRefreshes() {
+			if (!window.__umamiStatsRefreshTimers?.length) {
+				return;
+			}
+
+			window.__umamiStatsRefreshTimers.forEach((timerId) => {
+				window.clearTimeout(timerId);
+			});
+			window.__umamiStatsRefreshTimers = [];
+		}
+
+		function scheduleStatsRefreshes(pathname) {
+			clearPendingStatsRefreshes();
+
+			window.__umamiStatsRefreshTimers = UMAMI_REFRESH_DELAYS.map(
+				(delayMs) =>
+					window.setTimeout(function () {
+						if (
+							window.oddmisc &&
+							typeof window.oddmisc.clearCache === "function"
+						) {
+							window.oddmisc.clearCache();
+						}
+						window.dispatchEvent(
+							new CustomEvent("umami:stats-refresh", {
+								detail: {
+									pathname,
+									force: true,
+									delayMs,
+									reason: "pageview",
+								},
+							}),
+						);
+					}, delayMs),
+			);
+		}
 
 		function hookUmamiSwupTracking() {
 			if (window.__umamiSwupHooked) {
@@ -78,8 +135,31 @@ const umamiEnable =
 					return;
 				}
 
+				const pathname = normalizePathname(window.location.pathname);
+				const now = Date.now();
+
+				if (
+					window.__umamiLastTrackedPath === pathname &&
+					typeof window.__umamiLastTrackedAt === "number" &&
+					now - window.__umamiLastTrackedAt <
+						UMAMI_DUPLICATE_WINDOW_MS
+				) {
+					return;
+				}
+
 				if (window.umami && typeof window.umami.track === "function") {
+					window.__umamiLastTrackedPath = pathname;
+					window.__umamiLastTrackedAt = now;
 					window.umami.track();
+					window.dispatchEvent(
+						new CustomEvent("umami:pageview-tracked", {
+							detail: {
+								pathname,
+								trackedAt: now,
+							},
+						}),
+					);
+					scheduleStatsRefreshes(pathname);
 				}
 			}
 
@@ -348,6 +428,16 @@ const umamiEnable =
 						detail: { client: window.oddmisc },
 					}),
 				);
+				setTimeout(function () {
+					window.dispatchEvent(
+						new CustomEvent("umami:stats-refresh", {
+							detail: {
+								force: false,
+								reason: "init",
+							},
+						}),
+					);
+				}, 300);
 			})();
 		}
 

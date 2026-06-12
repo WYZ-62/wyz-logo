@@ -125,6 +125,9 @@ declare global {
 		__umamiScriptLoaded?: boolean;
 		__umamiSwupHooked?: boolean;
 		__umamiRuntimeInitialized?: boolean;
+		__umamiStatsRefreshTimers?: number[];
+		__umamiLastTrackedPath?: string;
+		__umamiLastTrackedAt?: number;
 		__trackCurrentUmamiPage?: () => void;
 		__siteStatsUmamiInitialized?: boolean;
 		__footerUmamiStatsInitialized?: boolean;

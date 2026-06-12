@@ -72,6 +72,11 @@ export function getTagUrl(tag: string): string {
 	return url(`/archive/?tag=${encodeURIComponent(tag.trim())}`);
 }
 
+export function getTopicUrl(topicId: string): string {
+	const normalizedId = topicId.replace(/^\/+/, "").replace(/\/+$/, "");
+	return url(`/topics/${normalizedId}/`);
+}
+
 export function getCategoryUrl(category: string | null): string {
 	if (
 		!category ||
