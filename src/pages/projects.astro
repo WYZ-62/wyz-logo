@@ -54,7 +54,7 @@ const getCategoryIcon = (category: string) => {
 const filterTabs = [
 	{
 		value: "all",
-		label: i18n(I18nKey.friendsFilterAll),
+		label: i18n(I18nKey.projectsAll),
 		icon: "material-symbols:apps",
 		count: projectsData.length,
 	},
@@ -94,11 +94,11 @@ const subtitle = i18n(I18nKey.projectsSubtitle);
 
 			<div
 				id="projects-grid"
-				class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start"
+				class="grid grid-cols-1 gap-6 items-start max-w-6xl mx-auto"
 			>
 				{
 					projectsData.map((project) => (
-						<ProjectCard project={project} maxTechStack={4} />
+						<ProjectCard project={project} maxTechStack={6} />
 					))
 				}
 			</div>

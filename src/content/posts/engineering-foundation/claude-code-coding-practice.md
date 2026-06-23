@@ -7,6 +7,7 @@ tags: [Claude Code, AI, 工程实践]
 category: 后端
 author: WYZ
 draft: false
+legacyAliases: [claude-code-coding-practice]
 ---
 
 # Claude Code编码实战

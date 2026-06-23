@@ -7,6 +7,7 @@ tags: [AI, 研发流程, 工程实践]
 category: 后端
 author: WYZ
 draft: false
+legacyAliases: [ai-rd-process]
 ---
 
 # AI研发流程

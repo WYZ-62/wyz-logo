@@ -337,6 +337,7 @@ export interface BlogPostData {
 	image?: string;
 	category?: string;
 	pinned?: boolean;
+	legacyAliases?: string[];
 	prevTitle?: string;
 	prevSlug?: string;
 	nextTitle?: string;
@@ -374,9 +375,20 @@ export interface MusicPlayerConfig {
 	type: string; // 音乐类型
 }
 
+export interface FooterRegistrationItem {
+	enable: boolean; // 是否显示该备案信息
+	text: string; // 备案号文本
+	href: string; // 备案公示或查询链接
+	label?: string; // 短标签，例如“ICP备”或“公网安备”
+}
+
 export interface FooterConfig {
 	enable: boolean; // 是否启用Footer HTML注入功能
-	customHtml?: string; // 自定义HTML内容，用于添加备案号等信息
+	customHtml?: string; // 自定义HTML内容，用于添加额外页脚信息
+	registrations?: {
+		icp?: FooterRegistrationItem;
+		publicSecurity?: FooterRegistrationItem;
+	};
 }
 
 // 组件配置类型定义

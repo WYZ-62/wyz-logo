@@ -8,7 +8,9 @@ import { getSortedPostsList } from "../utils/content-utils";
 import { url } from "../utils/url-utils";
 
 const title = "专题";
-const topics = buildTopics(await getSortedPostsList());
+const topics = buildTopics(
+	await getSortedPostsList({ visibility: "accessible" }),
+);
 const subtitle = `共 ${topics.length} 个专题，点击后可查看专题下的完整文章。`;
 ---
 

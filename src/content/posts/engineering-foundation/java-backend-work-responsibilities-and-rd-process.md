@@ -7,6 +7,7 @@ tags: [Java]
 category: 后端
 author: WYZ
 draft: false
+legacyAliases: [java-backend-work-responsibilities-and-rd-process]
 ---
 
 # Java后端工作职责和研发流程

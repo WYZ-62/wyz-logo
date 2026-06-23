@@ -29,6 +29,7 @@ const postsCollection = defineCollection({
 
 		/* Posts alias */
 		alias: z.string().optional(),
+		legacyAliases: z.array(z.string()).optional().default([]),
 
 		/* Custom permalink - 自定义固定链接，优先级高于 alias */
 		permalink: z.string().optional(),

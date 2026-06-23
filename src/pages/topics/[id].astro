@@ -10,7 +10,9 @@ import { getSortedPostsList } from "../../utils/content-utils";
 import { getTopicUrl, url } from "../../utils/url-utils";
 
 export async function getStaticPaths() {
-	const topics = buildTopics(await getSortedPostsList());
+	const topics = buildTopics(
+		await getSortedPostsList({ visibility: "accessible" }),
+	);
 	return topics.map((topic) => ({
 		params: { id: topic.id },
 		props: { topic },

@@ -40,7 +40,7 @@ import { getTopicIdsForPost } from "../data/topics";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
 
 export async function getStaticPaths() {
-	const blogEntries = await getSortedPosts();
+	const blogEntries = await getSortedPosts({ visibility: "accessible" });
 
 	// 初始化文章 ID 映射
 	initPostIdMap(blogEntries);

@@ -1,16 +1,22 @@
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
+import {
+	getPostVisibilityMode,
+	getPrimaryTopicIdForPost,
+	sortTopicPosts,
+} from "../data/topics";
 import { initPostIdMap } from "@utils/permalink-utils";
 import { getCategoryUrl, getPostUrl } from "@utils/url-utils";
 import { type CollectionEntry, getCollection } from "astro:content";
 
-// // Retrieve posts and sort them by publication date
-async function getRawSortedPosts() {
-	const allBlogPosts = await getCollection("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
-	});
+export interface GetSortedPostsOptions {
+	visibility?: "public" | "accessible";
+}
 
-	const sorted = allBlogPosts.sort((a, b) => {
+function sortPosts<T extends { data: { pinned?: boolean; priority?: number; published: Date } }>(
+	posts: T[],
+): T[] {
+	return [...posts].sort((a, b) => {
 		// 首先按置顶状态排序，置顶文章在前
 		if (a.data.pinned && !b.data.pinned) {
 			return -1;
@@ -39,20 +45,86 @@ async function getRawSortedPosts() {
 		const dateB = new Date(b.data.published);
 		return dateA > dateB ? -1 : 1;
 	});
-	return sorted;
 }
 
-export async function getSortedPosts() {
-	const sorted = await getRawSortedPosts();
+function matchesVisibility(
+	post: CollectionEntry<"posts">,
+	visibility: NonNullable<GetSortedPostsOptions["visibility"]>,
+): boolean {
+	const displayMode = getPostVisibilityMode(post);
 
-	for (let i = 1; i < sorted.length; i++) {
-		sorted[i].data.nextSlug = sorted[i - 1].id;
-		sorted[i].data.nextTitle = sorted[i - 1].data.title;
+	if (displayMode === "hidden") {
+		return false;
 	}
-	for (let i = 0; i < sorted.length - 1; i++) {
-		sorted[i].data.prevSlug = sorted[i + 1].id;
-		sorted[i].data.prevTitle = sorted[i + 1].data.title;
+
+	if (visibility === "accessible") {
+		return true;
 	}
+
+	return displayMode === "public";
+}
+
+function applyNavigationToSortedPosts(posts: CollectionEntry<"posts">[]) {
+	for (const post of posts) {
+		post.data.prevSlug = "";
+		post.data.prevTitle = "";
+		post.data.nextSlug = "";
+		post.data.nextTitle = "";
+	}
+
+	for (let i = 1; i < posts.length; i++) {
+		posts[i].data.nextSlug = posts[i - 1].id;
+		posts[i].data.nextTitle = posts[i - 1].data.title;
+	}
+	for (let i = 0; i < posts.length - 1; i++) {
+		posts[i].data.prevSlug = posts[i + 1].id;
+		posts[i].data.prevTitle = posts[i + 1].data.title;
+	}
+}
+
+function annotatePostNavigation(posts: CollectionEntry<"posts">[]) {
+	const publicPosts = sortPosts(
+		posts.filter((post) => getPostVisibilityMode(post) === "public"),
+	);
+	applyNavigationToSortedPosts(publicPosts);
+
+	const topicGroups = new Map<string, CollectionEntry<"posts">[]>();
+
+	for (const post of posts) {
+		if (getPostVisibilityMode(post) !== "topic-only") {
+			continue;
+		}
+
+		const topicId = getPrimaryTopicIdForPost(post) ?? "__topic_only__";
+		const currentGroup = topicGroups.get(topicId) ?? [];
+		currentGroup.push(post);
+		topicGroups.set(topicId, currentGroup);
+	}
+
+	for (const [topicId, topicPosts] of topicGroups) {
+		const sortedGroup =
+			topicId === "__topic_only__"
+				? sortPosts(topicPosts)
+				: sortTopicPosts(topicId, topicPosts);
+		applyNavigationToSortedPosts(sortedGroup);
+	}
+}
+
+// // Retrieve posts and sort them by publication date
+async function getRawSortedPosts(options: GetSortedPostsOptions = {}) {
+	const visibility = options.visibility ?? "public";
+	const allBlogPosts = await getCollection("posts", ({ data }) => {
+		return import.meta.env.PROD ? data.draft !== true : true;
+	});
+
+	return sortPosts(
+		allBlogPosts.filter((post) => matchesVisibility(post, visibility)),
+	);
+}
+
+export async function getSortedPosts(options: GetSortedPostsOptions = {}) {
+	const sorted = await getRawSortedPosts(options);
+	annotatePostNavigation(sorted);
 
 	return sorted;
 }
@@ -61,8 +133,10 @@ export interface PostForList {
 	data: CollectionEntry<"posts">["data"];
 	url?: string; // 预计算的文章 URL
 }
-export async function getSortedPostsList(): Promise<PostForList[]> {
-	const sortedFullPosts = await getRawSortedPosts();
+export async function getSortedPostsList(
+	options: GetSortedPostsOptions = {},
+): Promise<PostForList[]> {
+	const sortedFullPosts = await getRawSortedPosts(options);
 
 	// 初始化文章 ID 映射（用于 permalink 功能）
 	initPostIdMap(sortedFullPosts);
@@ -85,9 +159,12 @@ export async function getTagList(): Promise<Tag[]> {
 	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
+	const visiblePosts = allBlogPosts.filter((post) =>
+		matchesVisibility(post, "public"),
+	);
 
 	const countMap: Record<string, number> = {};
-	allBlogPosts.forEach((post: { data: { tags: string[] } }) => {
+	visiblePosts.forEach((post: { data: { tags: string[] } }) => {
 		post.data.tags.forEach((tag: string) => {
 			if (!countMap[tag]) {
 				countMap[tag] = 0;
@@ -114,8 +191,11 @@ export async function getCategoryList(): Promise<Category[]> {
 	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
+	const visiblePosts = allBlogPosts.filter((post) =>
+		matchesVisibility(post, "public"),
+	);
 	const count: Record<string, number> = {};
-	allBlogPosts.forEach((post: { data: { category: string | null } }) => {
+	visiblePosts.forEach((post: { data: { category: string | null } }) => {
 		if (!post.data.category) {
 			const ucKey = i18n(I18nKey.uncategorized);
 			count[ucKey] = count[ucKey] ? count[ucKey] + 1 : 1;
@@ -220,10 +300,26 @@ export async function getRelatedPosts(
 	const allPosts = await getCollection<"posts">("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
+	const currentVisibility = getPostVisibilityMode(currentPost);
 
 	// 排除自身和加密文章
 	const candidates = allPosts.filter(
-		(p) => p.id !== currentPost.id && !p.data.password,
+		(p) => {
+			if (p.id === currentPost.id || p.data.password) {
+				return false;
+			}
+
+			const candidateVisibility = getPostVisibilityMode(p);
+			if (candidateVisibility === "hidden") {
+				return false;
+			}
+
+			if (currentVisibility === "public") {
+				return candidateVisibility === "public";
+			}
+
+			return true;
+		},
 	);
 
 	const currentTags = new Set(currentPost.data.tags || []);

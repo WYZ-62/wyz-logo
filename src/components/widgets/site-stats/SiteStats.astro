@@ -27,7 +27,9 @@ const umamiShareUrl = Boolean(siteConfig.thirdPartyAnalytics?.umami?.shareUrl);
 
 // 获取所有文章
 const posts = await getSortedPosts();
-const topics = buildTopics(await getSortedPostsList());
+const topics = buildTopics(
+	await getSortedPostsList({ visibility: "accessible" }),
+);
 const contentPaths = [
 	...posts.map((post) => getPostUrl(post)),
 	...topics.map((topic) => getTopicUrl(topic.id)),

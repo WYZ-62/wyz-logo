@@ -41,7 +41,7 @@ import { formatDateToYYYYMMDD } from "../../utils/date-utils";
 import { getImage } from "astro:assets";
 
 export async function getStaticPaths() {
-	const blogEntries = await getSortedPosts();
+	const blogEntries = await getSortedPosts({ visibility: "accessible" });
 
 	// 初始化文章 ID 映射（用于 %post_id% 占位符）
 	initPostIdMap(blogEntries);
@@ -50,6 +50,16 @@ export async function getStaticPaths() {
 		params: { slug: string };
 		props: { entry: CollectionEntry<"posts"> };
 	}[] = [];
+	const appendAliasPath = (entry: CollectionEntry<"posts">, aliasValue: string) => {
+		let alias = aliasValue.replace(/^\/+/, "").replace(/\/+$/, "");
+		if (alias.startsWith("posts/")) {
+			alias = alias.replace(/^posts\//, "");
+		}
+		paths.push({
+			params: { slug: alias },
+			props: { entry },
+		});
+	};
 
 	for (const entry of blogEntries) {
 		// 将 id 转换为 slug（移除扩展名）以匹配路由参数
@@ -84,18 +94,11 @@ export async function getStaticPaths() {
 
 			// 如果文章有 alias，也创建对应的路径
 			if (entry.data.alias) {
-				// 移除开头的斜杠和结尾的斜杠
-				// 同时移除可能的 "posts/" 前缀，避免重复
-				let alias = entry.data.alias
-					.replace(/^\/+/, "")
-					.replace(/\/+$/, "");
-				if (alias.startsWith("posts/")) {
-					alias = alias.replace(/^posts\//, "");
-				}
-				paths.push({
-					params: { slug: alias },
-					props: { entry },
-				});
+				appendAliasPath(entry, entry.data.alias);
+			}
+
+			for (const legacyAlias of entry.data.legacyAliases || []) {
+				appendAliasPath(entry, legacyAlias);
 			}
 		}
 	}
