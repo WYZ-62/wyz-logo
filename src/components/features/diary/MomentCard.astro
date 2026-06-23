@@ -20,12 +20,13 @@ const relativeTime = formatRelativeTime(
 	data-tags={moment.tags?.join(",") || ""}
 >
 	<div class="p-5">
-		<!-- Content -->
-		<p
-			class="text-sm md:text-base text-black/90 dark:text-white/90 leading-relaxed mb-3"
-		>
-			{moment.content}
-		</p>
+		{
+			moment.title && (
+				<h2 class="text-base md:text-lg font-semibold text-black dark:text-white mb-2">
+					{moment.title}
+				</h2>
+			)
+		}
 
 		<!-- Images -->
 		{
@@ -33,24 +34,39 @@ const relativeTime = formatRelativeTime(
 				<div
 					class:list={[
 						"diary-images grid gap-2 mb-3",
-						moment.images.length === 1 && "diary-images-single",
-						moment.images.length === 2 && "diary-images-double",
-						moment.images.length === 3 && "diary-images-triple",
-						moment.images.length >= 4 && "diary-images-grid",
+						moment.images!.length === 1 && "diary-images-single",
+						moment.images!.length === 2 && "diary-images-double",
+						moment.images!.length === 3 && "diary-images-triple",
+						moment.images!.length >= 4 && "diary-images-grid",
 					]}
 				>
 					{moment.images.map((image, imgIndex) => (
-						<div class="relative rounded-lg overflow-hidden aspect-square cursor-pointer">
+						<div
+							class:list={[
+								"relative rounded-lg overflow-hidden cursor-pointer",
+								moment.images!.length === 1
+									? "diary-image-single-item"
+									: "aspect-square",
+							]}
+						>
 							<a
 								href="javascript:void(0)"
 								data-src={image}
 								data-fancybox={`diary-${index}-${imgIndex}`}
-								class="block w-full h-full"
+								class:list={[
+									"block",
+									moment.images!.length > 1 && "w-full h-full",
+								]}
 							>
 								<img
 									src={image}
 									alt="diary moment image"
-									class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+									class:list={[
+										"transition-transform duration-300 hover:scale-105",
+										moment.images!.length === 1
+											? "w-full h-auto object-contain"
+											: "w-full h-full object-cover",
+									]}
 									loading="lazy"
 									decoding="async"
 								/>
@@ -60,6 +76,13 @@ const relativeTime = formatRelativeTime(
 				</div>
 			)
 		}
+
+		<!-- Content -->
+		<p
+			class="text-sm md:text-base text-black/90 dark:text-white/90 leading-relaxed whitespace-pre-line mb-3"
+		>
+			{moment.content}
+		</p>
 
 		<!-- Tags -->
 		{
@@ -180,7 +203,16 @@ const relativeTime = formatRelativeTime(
 	/* 1 image: large, max-width constrained */
 	.diary-images-single {
 		grid-template-columns: 1fr;
-		max-width: 400px;
+		width: 100%;
+		max-width: 820px;
+	}
+
+	.diary-image-single-item {
+		background: rgb(0 0 0 / 0.03);
+	}
+
+	.dark .diary-image-single-item {
+		background: rgb(255 255 255 / 0.04);
 	}
 
 	/* 2 images: two columns, medium size */
@@ -206,7 +238,7 @@ const relativeTime = formatRelativeTime(
 
 	@media (min-width: 768px) {
 		.diary-images-single {
-			max-width: 500px;
+			max-width: 900px;
 		}
 		.diary-images-double {
 			max-width: 560px;

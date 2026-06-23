@@ -2,6 +2,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
+import { Icon } from "astro-icon/components";
+
 import { footerConfig, profileConfig } from "../../../config";
 import I18nKey from "../../../i18n/i18nKey";
 import { i18n } from "../../../i18n/translation";
@@ -33,6 +35,41 @@ if (footerConfig.enable) {
 		}
 	}
 }
+
+const footerRegistrationItems: {
+	label: string;
+	text: string;
+	href: string;
+	icon: string;
+}[] = [];
+
+const icpRegistration = footerConfig.registrations?.icp;
+if (
+	icpRegistration?.enable &&
+	icpRegistration.text.trim() !== "" &&
+	icpRegistration.href.trim() !== ""
+) {
+	footerRegistrationItems.push({
+		label: icpRegistration.label?.trim() || "ICP备",
+		text: icpRegistration.text.trim(),
+		href: icpRegistration.href.trim(),
+		icon: "material-symbols:verified-outline-rounded",
+	});
+}
+
+const publicSecurityRegistration = footerConfig.registrations?.publicSecurity;
+if (
+	publicSecurityRegistration?.enable &&
+	publicSecurityRegistration.text.trim() !== "" &&
+	publicSecurityRegistration.href.trim() !== ""
+) {
+	footerRegistrationItems.push({
+		label: publicSecurityRegistration.label?.trim() || "公网安备",
+		text: publicSecurityRegistration.text.trim(),
+		href: publicSecurityRegistration.href.trim(),
+		icon: "material-symbols:shield-lock-outline-rounded",
+	});
+}
 ---
 
 <!--<div class="border-t border-[var(--primary)] mx-16 border-dashed py-8 max-w-[var(--page-width)] flex flex-col items-center justify-center px-6">-->
@@ -45,6 +82,26 @@ if (footerConfig.enable) {
 	class="transition border-dashed border-[oklch(85%_0.01_var(--hue))] dark:border-white/15 rounded-2xl mb-12 flex flex-col items-center justify-center px-6"
 >
 	<div class="transition text-50 text-sm text-center">
+		{footerRegistrationItems.length > 0 && (
+			<div class="footer-records mb-5 w-full max-w-3xl">
+				{footerRegistrationItems.map((item) => (
+					<a
+						class="transition footer-record-pill"
+						href={item.href}
+						target="_blank"
+						rel="noopener noreferrer nofollow"
+						aria-label={`${item.label} ${item.text}`}
+					>
+						<span class="footer-record-badge">
+							<Icon name={item.icon} class="text-[0.95rem]" />
+							<span>{item.label}</span>
+						</span>
+						<span class="footer-record-text">{item.text}</span>
+					</a>
+				))}
+			</div>
+		)}
+
 		{customFooterHtml && <div class="mb-2" set:html={customFooterHtml} />}
 
 		<div
@@ -178,6 +235,51 @@ if (footerConfig.enable) {
 </script>
 
 <style>
+	.footer-records {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.9rem;
+	}
+
+	.footer-record-pill {
+		display: inline-flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.75rem;
+		padding: 0.82rem 1.15rem;
+		border-radius: 999px;
+		border: 1px dashed color-mix(in srgb, var(--primary) 18%, transparent);
+		background: color-mix(in srgb, var(--btn-regular-bg) 72%, white 28%);
+		color: rgba(15, 23, 42, 0.78);
+		text-decoration: none;
+	}
+
+	.footer-record-pill:hover {
+		transform: translateY(-1px);
+		border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+	}
+
+	.footer-record-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.38rem 0.72rem;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--primary) 16%, white);
+		color: var(--btn-content);
+		font-size: 0.92rem;
+		font-weight: 700;
+		line-height: 1;
+	}
+
+	.footer-record-text {
+		font-size: 1rem;
+		font-weight: 500;
+	}
+
 	.footer-stats-card {
 		display: flex;
 		align-items: center;
@@ -241,6 +343,15 @@ if (footerConfig.enable) {
 		background: color-mix(in srgb, var(--btn-regular-bg) 48%, black 52%);
 	}
 
+	:global(.dark) .footer-record-pill {
+		background: color-mix(in srgb, var(--btn-regular-bg) 48%, black 52%);
+		color: rgba(255, 255, 255, 0.82);
+	}
+
+	:global(.dark) .footer-record-badge {
+		background: color-mix(in srgb, var(--primary) 22%, black 78%);
+	}
+
 	:global(.dark) .footer-stats-title {
 		color: rgba(255, 255, 255, 0.82);
 	}
@@ -251,6 +362,10 @@ if (footerConfig.enable) {
 	}
 
 	@media (max-width: 768px) {
+		.footer-record-pill {
+			width: 100%;
+		}
+
 		.footer-stats-card {
 			flex-direction: column;
 			align-items: stretch;

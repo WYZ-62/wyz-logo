@@ -49,6 +49,7 @@ export function transformMemosToDiary(
 		.filter((m) => m.visibility === "PUBLIC" && m.state === "NORMAL")
 		.map((m, i) => ({
 			id: i,
+			title: undefined,
 			content: m.content,
 			date: m.createTime,
 			tags: m.tags.length > 0 ? m.tags : undefined,
@@ -134,19 +135,31 @@ function renderMomentCard(
 	);
 
 	const tagsAttr = moment.tags?.join(",") || "";
+	const titleHtml = moment.title
+		? `<h2 class="text-base md:text-lg font-semibold text-black dark:text-white mb-2">${escapeHtml(moment.title)}</h2>`
+		: "";
 
 	let imagesHtml = "";
 	if (moment.images && moment.images.length > 0) {
 		const layoutClass = getImageLayoutClass(moment.images.length);
 		const imgs = moment.images
-			.map(
-				(img, i) => `
-				<div class="relative rounded-lg overflow-hidden aspect-square cursor-pointer">
-					<a href="javascript:void(0)" data-src="${escapeHtml(img)}" data-fancybox="diary-${index}-${i}" class="block w-full h-full">
-						<img src="${escapeHtml(img)}" alt="diary moment image" class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" loading="lazy" decoding="async" />
+			.map((img, i) => {
+				const isSingleImage = moment.images?.length === 1;
+				const itemClass = isSingleImage
+					? "relative rounded-lg overflow-hidden cursor-pointer diary-image-single-item"
+					: "relative rounded-lg overflow-hidden aspect-square cursor-pointer";
+				const linkClass = isSingleImage ? "block" : "block w-full h-full";
+				const imageClass = isSingleImage
+					? "w-full h-auto object-contain transition-transform duration-300 hover:scale-105"
+					: "w-full h-full object-cover transition-transform duration-300 hover:scale-105";
+
+				return `
+				<div class="${itemClass}">
+					<a href="javascript:void(0)" data-src="${escapeHtml(img)}" data-fancybox="diary-${index}-${i}" class="${linkClass}">
+						<img src="${escapeHtml(img)}" alt="diary moment image" class="${imageClass}" loading="lazy" decoding="async" />
 					</a>
-				</div>`,
-			)
+				</div>`;
+			})
 			.join("");
 		imagesHtml = `<div class="diary-images grid gap-2 mb-3 ${layoutClass}">${imgs}</div>`;
 	}
@@ -169,8 +182,9 @@ function renderMomentCard(
 	return `
 	<div class="moment-card group relative bg-transparent rounded-xl border border-black/10 dark:border-white/10 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1" data-tags="${tagsAttr}">
 		<div class="p-5">
-			<p class="text-sm md:text-base text-black/90 dark:text-white/90 leading-relaxed mb-3">${escapeHtml(moment.content)}</p>
+			${titleHtml}
 			${imagesHtml}
+			<p class="text-sm md:text-base text-black/90 dark:text-white/90 leading-relaxed whitespace-pre-line mb-3">${escapeHtml(moment.content)}</p>
 			${tagsHtml}
 			<hr class="border-t border-black/5 dark:border-white/5 my-3" />
 			<div class="flex items-center justify-between text-xs text-black/50 dark:text-white/50 flex-wrap gap-2">
