@@ -1,4 +1,6 @@
 ---
+import type { MarkdownHeading } from "astro";
+
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import { getSortedPostsList } from "@/utils/content-utils";
@@ -9,10 +11,18 @@ import WidgetLayout from "../common/WidgetLayout.astro";
 interface Props {
 	class?: string;
 	style?: string;
+	headings?: MarkdownHeading[];
 }
 
-const { class: className, style } = Astro.props;
+const {
+	class: className,
+	style,
+	headings = [],
+} = Astro.props as Props;
+
 const currentPath = Astro.url.pathname;
+const hasArticleHeadings = headings.length > 0;
+
 const allPosts = await getSortedPostsList();
 
 const visiblePosts = allPosts
@@ -35,34 +45,97 @@ const visiblePosts = allPosts
 	class={"group " + (className || "")}
 	style={style}
 >
-	<div class="doc-list">
-		{
-			visiblePosts.length > 0 ? (
-				visiblePosts.map((post) => (
-					<a
-						href={post.url}
-						class:list={[
-							"doc-item",
-							{ active: post.isActive },
-						]}
-						aria-current={post.isActive ? "page" : undefined}
-					>
-						<span class="doc-index">{post.order}</span>
-						<span class="doc-copy">
-							<span class="doc-title">{post.data.title}</span>
-							<span class="doc-meta">{post.category}</span>
-						</span>
-					</a>
-				))
-			) : (
-				<div class="doc-empty">暂时还没有可展示的文档</div>
-			)
-		}
-	</div>
+	{
+		hasArticleHeadings ? (
+			<table-of-contents-card class="toc-card-root">
+				<div class="toc-scroll-container" data-card-toc-content></div>
+			</table-of-contents-card>
+		) : (
+			<div class="doc-list">
+				{
+					visiblePosts.length > 0 ? (
+						visiblePosts.map((post) => (
+							<a
+								href={post.url}
+								class:list={[
+									"doc-item",
+									{ active: post.isActive },
+								]}
+								aria-current={post.isActive ? "page" : undefined}
+							>
+								<span class="doc-index">{post.order}</span>
+								<span class="doc-copy">
+									<span class="doc-title">{post.data.title}</span>
+									<span class="doc-meta">{post.category}</span>
+								</span>
+							</a>
+						))
+					) : (
+						<div class="doc-empty">暂时还没有可展示的文档</div>
+					)
+				}
+			</div>
+		)
+	}
 </WidgetLayout>
 
+<script>
+	import { TOCManager, isPostPage } from "@/utils/tocManager";
+
+	class CardTableOfContents extends HTMLElement {
+		manager: TOCManager | null = null;
+		contentEl: HTMLElement | null = null;
+		cleanupInit: (() => void) | null = null;
+
+		connectedCallback() {
+			this.contentEl = this.querySelector(
+				"[data-card-toc-content]",
+			) as HTMLElement | null;
+
+			if (!this.contentEl) {
+				return;
+			}
+
+			if (!isPostPage()) {
+				this.contentEl.innerHTML = "";
+				return;
+			}
+
+			const initTOC = () => {
+				this.manager?.cleanup();
+				this.manager = new TOCManager({
+					contentElement: this.contentEl || undefined,
+					maxLevel: window.siteConfig?.toc?.depth ?? 3,
+					scrollOffset: 80,
+					useJapaneseBadge:
+						window.siteConfig?.toc?.useJapaneseBadge ?? false,
+				});
+				this.manager.init();
+			};
+
+			initTOC();
+			document.addEventListener("astro:page-load", initTOC);
+			this.cleanupInit = () => {
+				document.removeEventListener("astro:page-load", initTOC);
+			};
+		}
+
+		disconnectedCallback() {
+			this.manager?.cleanup();
+			this.manager = null;
+			this.cleanupInit?.();
+			this.cleanupInit = null;
+		}
+	}
+
+	if (!customElements.get("table-of-contents-card")) {
+		customElements.define("table-of-contents-card", CardTableOfContents);
+	}
+</script>
+
 <style>
-	.doc-list {
+	.doc-list,
+	.toc-scroll-container {
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
@@ -73,39 +146,47 @@ const visiblePosts = allPosts
 		scrollbar-color: transparent transparent;
 	}
 
-	.doc-list::-webkit-scrollbar {
+	.doc-list::-webkit-scrollbar,
+	.toc-scroll-container::-webkit-scrollbar {
 		width: 0.2rem;
 	}
 
-	.doc-list::-webkit-scrollbar-track {
+	.doc-list::-webkit-scrollbar-track,
+	.toc-scroll-container::-webkit-scrollbar-track {
 		background: transparent;
 	}
 
-	.doc-list::-webkit-scrollbar-thumb {
+	.doc-list::-webkit-scrollbar-thumb,
+	.toc-scroll-container::-webkit-scrollbar-thumb {
 		border-radius: 999px;
 		background: transparent;
 		transition: background 0.2s ease;
 	}
 
-	.doc-list:hover {
+	.doc-list:hover,
+	.toc-scroll-container:hover {
 		scrollbar-color: color-mix(in oklab, var(--primary) 16%, transparent)
 			transparent;
 	}
 
-	.doc-list:hover::-webkit-scrollbar-thumb {
+	.doc-list:hover::-webkit-scrollbar-thumb,
+	.toc-scroll-container:hover::-webkit-scrollbar-thumb {
 		background: color-mix(in oklab, var(--primary) 16%, transparent);
 	}
 
-	.doc-list:active {
+	.doc-list:active,
+	.toc-scroll-container:active {
 		scrollbar-color: color-mix(in oklab, var(--primary) 22%, transparent)
 			transparent;
 	}
 
-	.doc-list:active::-webkit-scrollbar-thumb {
+	.doc-list:active::-webkit-scrollbar-thumb,
+	.toc-scroll-container:active::-webkit-scrollbar-thumb {
 		background: color-mix(in oklab, var(--primary) 22%, transparent);
 	}
 
-	.doc-item {
+	.doc-item,
+	:global(.toc-scroll-container .toc-item) {
 		display: grid;
 		grid-template-columns: 2.1rem minmax(0, 1fr);
 		align-items: flex-start;
@@ -128,9 +209,11 @@ const visiblePosts = allPosts
 			box-shadow 0.2s ease,
 			border-color 0.2s ease,
 			background 0.2s ease;
+		position: relative;
 	}
 
-	.doc-item:hover {
+	.doc-item:hover,
+	:global(.toc-scroll-container .toc-item:hover) {
 		transform: translateY(-2px);
 		border-color: color-mix(in oklab, var(--primary) 36%, var(--line-divider));
 		box-shadow: 0 16px 32px -24px
@@ -143,7 +226,8 @@ const visiblePosts = allPosts
 			);
 	}
 
-	.doc-item.active {
+	.doc-item.active,
+	:global(.toc-scroll-container .toc-item.visible) {
 		background:
 			linear-gradient(
 				135deg,
@@ -155,7 +239,8 @@ const visiblePosts = allPosts
 			color-mix(in oklab, var(--primary) 46%, transparent);
 	}
 
-	.doc-index {
+	.doc-index,
+	:global(.toc-scroll-container .toc-badge) {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -176,7 +261,8 @@ const visiblePosts = allPosts
 		flex-shrink: 0;
 	}
 
-	.doc-item.active .doc-index {
+	.doc-item.active .doc-index,
+	:global(.toc-scroll-container .toc-item.visible .toc-badge) {
 		background:
 			linear-gradient(
 				135deg,
@@ -186,14 +272,43 @@ const visiblePosts = allPosts
 		color: color-mix(in oklab, var(--primary) 58%, black);
 	}
 
+	:global(.toc-scroll-container .toc-badge) {
+		font-size: 0.82rem;
+	}
+
+	:global(.toc-scroll-container .toc-badge:not(.toc-badge-index)) {
+		background: color-mix(in oklab, var(--primary) 10%, transparent);
+	}
+
+	:global(.toc-scroll-container .toc-badge-dot) {
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--primary) 70%, white 30%);
+		display: inline-block;
+	}
+
+	:global(.toc-scroll-container .toc-badge-dot-sm) {
+		width: 0.36rem;
+		height: 0.36rem;
+		border-radius: 0.2rem;
+		background: color-mix(in oklab, var(--primary) 38%, transparent);
+		display: inline-block;
+	}
+
+	.doc-copy,
+	:global(.toc-scroll-container .toc-item) {
+		min-width: 0;
+	}
+
 	.doc-copy {
 		display: flex;
 		flex-direction: column;
 		gap: 0.36rem;
-		min-width: 0;
 	}
 
-	.doc-title {
+	.doc-title,
+	:global(.toc-scroll-container .toc-label) {
 		color: color-mix(in oklab, var(--deep-text) 92%, black 8%);
 		font-size: 0.96rem;
 		font-weight: 700;
@@ -203,6 +318,17 @@ const visiblePosts = allPosts
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
+	}
+
+	:global(.toc-scroll-container .toc-label-primary) {
+		font-size: 0.96rem;
+		font-weight: 700;
+	}
+
+	:global(.toc-scroll-container .toc-label-secondary) {
+		font-size: 0.84rem;
+		font-weight: 600;
+		opacity: 0.86;
 	}
 
 	.doc-meta {
@@ -222,14 +348,20 @@ const visiblePosts = allPosts
 		text-overflow: ellipsis;
 	}
 
-	.doc-empty {
+	.doc-empty,
+	:global(.toc-scroll-container .text-center) {
 		padding: 0.85rem 0.25rem 0.5rem;
 		color: var(--content-meta);
 		font-size: 0.9rem;
 		line-height: 1.6;
 	}
 
-	:global(.dark) .doc-item {
+	:global(.toc-scroll-container .toc-active-indicator) {
+		display: none;
+	}
+
+	:global(.dark) .doc-item,
+	:global(.dark) .toc-scroll-container .toc-item {
 		background:
 			linear-gradient(
 				135deg,
@@ -240,7 +372,8 @@ const visiblePosts = allPosts
 		box-shadow: 0 16px 34px -28px rgba(0, 0, 0, 0.72);
 	}
 
-	:global(.dark) .doc-item:hover {
+	:global(.dark) .doc-item:hover,
+	:global(.dark) .toc-scroll-container .toc-item:hover {
 		background:
 			linear-gradient(
 				135deg,
@@ -250,7 +383,8 @@ const visiblePosts = allPosts
 		border-color: color-mix(in oklab, var(--primary) 28%, var(--line-divider));
 	}
 
-	:global(.dark) .doc-item.active {
+	:global(.dark) .doc-item.active,
+	:global(.dark) .toc-scroll-container .toc-item.visible {
 		background:
 			linear-gradient(
 				135deg,
@@ -260,7 +394,8 @@ const visiblePosts = allPosts
 		border-color: color-mix(in oklab, var(--primary) 34%, var(--line-divider));
 	}
 
-	:global(.dark) .doc-title {
+	:global(.dark) .doc-title,
+	:global(.dark) .toc-scroll-container .toc-label {
 		color: color-mix(in oklab, white 92%, var(--primary) 8%);
 	}
 
@@ -269,7 +404,8 @@ const visiblePosts = allPosts
 		color: color-mix(in oklab, white 72%, var(--primary) 28%);
 	}
 
-	:global(.dark) .doc-empty {
+	:global(.dark) .doc-empty,
+	:global(.dark) .toc-scroll-container .text-center {
 		color: var(--content-meta);
 	}
 </style>
