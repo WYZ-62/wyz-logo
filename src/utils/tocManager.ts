@@ -230,43 +230,46 @@ export class TOCManager {
 	}
 
 	private getVisibleHeadingIds(): string[] {
-		const headings = this.getAllHeadings();
-		const visibleHeadingIds: string[] = [];
+		const headings = this.getAllHeadings().filter((heading) => heading.id);
+		if (headings.length === 0) {
+			return [];
+		}
 
-		headings.forEach((heading) => {
-			if (heading.id) {
-				const rect = heading.getBoundingClientRect();
-				const isVisible =
-					rect.top < window.innerHeight && rect.bottom > 0;
+		const activationOffset = Math.max(72, this.scrollOffset + 12);
+		let activeHeadingId: string | null = null;
 
-				if (isVisible) {
-					visibleHeadingIds.push(heading.id);
-				}
+		for (const heading of headings) {
+			const rect = heading.getBoundingClientRect();
+
+			if (rect.top <= activationOffset) {
+				activeHeadingId = heading.id;
+				continue;
 			}
-		});
 
-		if (visibleHeadingIds.length === 0 && headings.length > 0) {
-			let closestHeading: string | null = null;
-			let minDistance = Number.POSITIVE_INFINITY;
+			if (!activeHeadingId && rect.top < window.innerHeight) {
+				activeHeadingId = heading.id;
+			}
+			break;
+		}
 
-			headings.forEach((heading) => {
-				if (heading.id) {
-					const rect = heading.getBoundingClientRect();
-					const distance = Math.abs(rect.top);
+		if (activeHeadingId) {
+			return [activeHeadingId];
+		}
 
-					if (distance < minDistance) {
-						minDistance = distance;
-						closestHeading = heading.id;
-					}
-				}
-			});
+		let closestHeadingId: string | null = null;
+		let minDistance = Number.POSITIVE_INFINITY;
 
-			if (closestHeading) {
-				visibleHeadingIds.push(closestHeading);
+		for (const heading of headings) {
+			const distance = Math.abs(
+				heading.getBoundingClientRect().top - activationOffset,
+			);
+			if (distance < minDistance) {
+				minDistance = distance;
+				closestHeadingId = heading.id;
 			}
 		}
 
-		return visibleHeadingIds;
+		return closestHeadingId ? [closestHeadingId] : [];
 	}
 
 	public updateActiveState(): void {
@@ -436,5 +439,9 @@ export class TOCManager {
 }
 
 export function isPostPage(): boolean {
-	return window.location.pathname.includes("/posts/");
+	return (
+		document.querySelector(
+			".custom-md, .markdown-content, .prose, #post-container",
+		) !== null
+	);
 }
