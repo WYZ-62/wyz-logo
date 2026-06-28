@@ -111,6 +111,18 @@ export const topicDefinitions: TopicDefinition[] = [
 			},
 		],
 	},
+	{
+		id: "bitstream-summer",
+		title: "比特流夏日",
+		description: "整理 Git、协作流程与工程实践中的高频基础操作，沉淀成适合复习和快速查阅的专题。",
+		cover: "/assets/desktop-banner/10.webp",
+		visibility: "public",
+		postMatchers: [
+			{
+				pathPrefixes: ["bitstream-summer"],
+			},
+		],
+	},
 ];
 
 function normalizeText(value: string | undefined | null): string {
