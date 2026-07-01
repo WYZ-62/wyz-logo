@@ -86,30 +86,6 @@ export const topicDefinitions: TopicDefinition[] = [
 		],
 	},
 	{
-		id: "ai-empowerment",
-		title: "AI赋能",
-		description: "整理大模型、Prompt、RAG、Agent 与 AI 工程化实践相关内容。",
-		cover: "/assets/desktop-banner/7.webp",
-		visibility: "topic-only",
-		postMatchers: [
-			{
-				pathPrefixes: ["ai-empowerment"],
-			},
-		],
-	},
-	{
-		id: "fullstack-development",
-		title: "全栈开发",
-		description: "整理前端基础、移动端开发、测试分析与软件质量等全栈学习内容。",
-		cover: "/assets/desktop-banner/8.webp",
-		visibility: "topic-only",
-		postMatchers: [
-			{
-				pathPrefixes: ["fullstack-development"],
-			},
-		],
-	},
-	{
 		id: "personal-notes",
 		title: "个人表达与随笔",
 		description: "收集和整理头像设计、生活感受与个人表达相关文字。",

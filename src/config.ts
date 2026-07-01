@@ -176,7 +176,6 @@ export const siteConfig: SiteConfig = {
 				"山川是不验收的文章，日月为你掌灯伴读",
 				"五颜六色的生活，不能乱七八糟的过",
 				"藏一片树叶最好的地方是森林",
-				"山林从不向四季起誓，枯荣随缘",
 			],
 			typewriter: {
 				enable: true, // 启用副标题打字机效果
