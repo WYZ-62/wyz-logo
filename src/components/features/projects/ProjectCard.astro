@@ -12,6 +12,8 @@ const showImageArea = project.showImage !== false && hasImage;
 const hasVisitUrl = !!project.visitUrl;
 const hasSourceCode = !!project.sourceCode;
 const hasTags = (project.tags?.length ?? 0) > 0;
+const isMrTrip = project.id === "mr-trip";
+const aiKeyword = "AI 对话";
 
 const getCategoryText = (category: string) => {
 	switch (category) {
@@ -43,145 +45,326 @@ const getStatusText = (status: string) => {
 
 const watermarkText =
 	project.id === "mr-trip" ? "TRIP" : project.title.slice(0, 4).toUpperCase();
+
+const tripDescriptionParts =
+	isMrTrip && project.description.includes(aiKeyword)
+		? project.description.split(aiKeyword)
+		: null;
+
+const tripHeroTags = [
+	{
+		icon: "material-symbols:language",
+		label: getCategoryText(project.category),
+		tone: "default",
+	},
+	...(project.featured
+		? [
+				{
+					icon: "material-symbols:star-rounded",
+					label: i18n(I18nKey.projectsFeatured),
+					tone: "gold",
+				},
+			]
+		: []),
+	{
+		icon: "mdi:map-marker-path",
+		label: "旅游规划",
+		tone: "default",
+	},
+	{
+		icon: "material-symbols:check-box-rounded",
+		label: getStatusText(project.status),
+		tone: "gold",
+	},
+];
+
+const tripMetaBadges = [
+	{
+		icon: "material-symbols:rocket-launch-rounded",
+		label: "已上线",
+		tone: "success",
+	},
+	{
+		icon: "material-symbols:trophy-rounded",
+		label: "智能体",
+		tone: "default",
+	},
+];
+
+const tripHighlightTech = new Set(["Vue 3", "Vite", "SpringAI"]);
+const tripTitleChars = isMrTrip ? Array.from(project.title) : [];
+const tripFooterYear = project.endDate
+	? new Date(project.endDate).getFullYear()
+	: new Date().getFullYear();
 ---
 
 <article
-	class="project-card group relative overflow-hidden transition-all duration-300"
+	class:list={[
+		"project-card group relative overflow-hidden transition-all duration-300",
+		{ "project-card-trip": isMrTrip },
+	]}
 	data-category={project.category}
 >
-	<div class="project-card-shell">
-		{
-			showImageArea && (
-				<div class="project-media">
-					{hasImage ? (
-						<img
-							src={project.image!}
-							alt={project.title}
-							class="project-cover"
-							loading="lazy"
-						/>
-					) : (
-						<div class="w-full h-full flex items-center justify-center">
-							<span class="text-4xl font-bold text-[var(--primary)]/15 select-none tracking-wide">
-								{project.title}
+	{
+		isMrTrip ? (
+			<div class="project-card-shell project-card-shell-trip">
+				<div class="trip-glow trip-glow-top" aria-hidden="true"></div>
+				<div class="trip-glow trip-glow-bottom" aria-hidden="true"></div>
+
+				<div class="project-trip-top-tags">
+					{tripHeroTags.map((tag) => (
+						<span class:list={["project-trip-pill", `is-${tag.tone}`]}>
+							<Icon name={tag.icon} class="text-[1rem] shrink-0" />
+							<span>{tag.label}</span>
+						</span>
+					))}
+				</div>
+
+				<div class="project-trip-header">
+					<h3 class="project-trip-title" aria-label={project.title}>
+						{tripTitleChars.map((char) => (
+							<span class="project-trip-title-char">{char}</span>
+						))}
+					</h3>
+
+					<div class="project-trip-badges">
+						{tripMetaBadges.map((badge) => (
+							<span class:list={["project-trip-badge", `is-${badge.tone}`]}>
+								<Icon name={badge.icon} class="text-[1rem] shrink-0" />
+								<span>{badge.label}</span>
 							</span>
-						</div>
-					)}
-					<div class="project-media-overlay"></div>
-					<div class="project-media-badge">
-						<span>{project.title}</span>
-						<small>AI Travel Planner</small>
+						))}
 					</div>
 				</div>
-			)
-		}
 
-		<div class="project-copy">
-			<div class="project-topline">
-				<span class="project-category-pill">
-					<Icon
-						name="material-symbols:language"
-						class="text-[1rem] shrink-0"
-					/>
-					{getCategoryText(project.category)}
-				</span>
+				<p class="project-trip-description">
+					{
+						tripDescriptionParts ? (
+							<>
+								{tripDescriptionParts[0]}
+								<strong>{aiKeyword}</strong>
+								{tripDescriptionParts.slice(1).join(aiKeyword)}
+							</>
+						) : (
+							project.description
+						)
+					}
+				</p>
+
 				{
-					hasSourceCode && (
-						<a
-							href={project.sourceCode!}
-							target="_blank"
-							rel="noopener noreferrer"
-							class="project-source-pill"
-						>
-							<Icon name="mdi:github" class="text-[1rem] shrink-0" />
-							<span>{i18n(I18nKey.projectsGitHub)}</span>
-							{
-								project.featured && (
-									<Icon
-										name="material-symbols:star-rounded"
-										class="text-[1.05rem]"
-									/>
-								)
-							}
-						</a>
+					hasTags && (
+						<div class="project-trip-tag-row">
+							{project.tags!.map((tag) => (
+								<span class="project-trip-tag">#{tag}</span>
+							))}
+						</div>
 					)
 				}
+
+				{
+					project.techStack && project.techStack.length > 0 && (
+						<div class="project-trip-tech-row">
+							{project.techStack.slice(0, maxTechStack).map((tech) => (
+								<span
+									class:list={[
+										"project-trip-tech-chip",
+										{ highlight: tripHighlightTech.has(tech) },
+									]}
+								>
+									{tech}
+								</span>
+							))}
+							{project.techStack.length > maxTechStack && (
+								<span class="project-trip-tech-chip muted">
+									+{project.techStack.length - maxTechStack}
+								</span>
+							)}
+						</div>
+					)
+				}
+
+				{
+					(hasVisitUrl || hasSourceCode) && (
+						<div class="project-trip-actions">
+							{hasVisitUrl && (
+								<a
+									href={project.visitUrl!}
+									target="_blank"
+									rel="noopener noreferrer"
+									class="project-trip-action project-trip-action-primary"
+								>
+									<Icon
+										name="material-symbols:play-arrow-rounded"
+										class="text-[1.2rem]"
+									/>
+									{i18n(I18nKey.projectsDemo)}
+								</a>
+							)}
+							{hasSourceCode && (
+								<a
+									href={project.sourceCode!}
+									target="_blank"
+									rel="noopener noreferrer"
+									class="project-trip-action project-trip-action-secondary"
+								>
+									<Icon name="mdi:github" class="text-[1.15rem]" />
+									{i18n(I18nKey.projectsGitHub)}
+								</a>
+							)}
+						</div>
+					)
+				}
+
+				<div class="project-trip-footer">
+					<span class="project-trip-copy">
+						© {tripFooterYear} 智能旅游应用. All rights reserved.
+					</span>
+					<span class="project-trip-rip">
+						<Icon
+							name="material-symbols:auto-awesome-rounded"
+							class="text-[1rem]"
+						/>
+						TRIP
+					</span>
+				</div>
 			</div>
-
-			{
-				project.featured && (
-					<p class="project-eyebrow">{i18n(I18nKey.projectsFeatured)}</p>
-				)
-			}
-
-			<div class="project-heading">
-				<h3 class="project-title">{project.title}</h3>
-				<span class="project-status">{getStatusText(project.status)}</span>
-			</div>
-
-			<p class="project-description">{project.description}</p>
-
-			{
-				hasTags && (
-					<div class="project-tag-row">
-						{project.tags!.map((tag) => (
-							<span class="project-tag">#{tag}</span>
-						))}
-					</div>
-				)
-			}
-
-			{
-				project.techStack && project.techStack.length > 0 && (
-					<div class="project-tech-row">
-						{project.techStack.slice(0, maxTechStack).map((tech) => (
-							<span class="project-tech-chip">{tech}</span>
-						))}
-						{project.techStack.length > maxTechStack && (
-							<span class="project-tech-chip project-tech-chip-muted">
-								+{project.techStack.length - maxTechStack}
-							</span>
-						)}
-					</div>
-				)
-			}
-
-			{
-				(hasVisitUrl || hasSourceCode) && (
-					<div class="project-actions">
-						{hasVisitUrl && (
-							<a
-								href={project.visitUrl!}
-								target="_blank"
-								rel="noopener noreferrer"
-								class="project-action project-action-primary"
-							>
-								<Icon
-									name="material-symbols:open-in-new-rounded"
-									class="text-[1.15rem]"
+		) : (
+			<div class="project-card-shell">
+				{
+					showImageArea && (
+						<div class="project-media">
+							{hasImage ? (
+								<img
+									src={project.image!}
+									alt={project.title}
+									class="project-cover"
+									loading="lazy"
 								/>
-								{i18n(I18nKey.projectsDemo)}
-							</a>
-						)}
-						{hasSourceCode && (
-							<a
-								href={project.sourceCode!}
-								target="_blank"
-								rel="noopener noreferrer"
-								class="project-action project-action-secondary"
-							>
-								<Icon name="mdi:github" class="text-[1.15rem]" />
-								{i18n(I18nKey.projectsGitHub)}
-							</a>
-						)}
-					</div>
-				)
-			}
+							) : (
+								<div class="w-full h-full flex items-center justify-center">
+									<span class="text-4xl font-bold text-[var(--primary)]/15 select-none tracking-wide">
+										{project.title}
+									</span>
+								</div>
+							)}
+							<div class="project-media-overlay"></div>
+							<div class="project-media-badge">
+								<span>{project.title}</span>
+								<small>AI Travel Planner</small>
+							</div>
+						</div>
+					)
+				}
 
-			<div class="project-watermark" aria-hidden="true">
-				{watermarkText}
+				<div class="project-copy">
+					<div class="project-topline">
+						<span class="project-category-pill">
+							<Icon
+								name="material-symbols:language"
+								class="text-[1rem] shrink-0"
+							/>
+							{getCategoryText(project.category)}
+						</span>
+						{
+							hasSourceCode && (
+								<a
+									href={project.sourceCode!}
+									target="_blank"
+									rel="noopener noreferrer"
+									class="project-source-pill"
+								>
+									<Icon name="mdi:github" class="text-[1rem] shrink-0" />
+									<span>{i18n(I18nKey.projectsGitHub)}</span>
+									{
+										project.featured && (
+											<Icon
+												name="material-symbols:star-rounded"
+												class="text-[1.05rem]"
+											/>
+										)
+									}
+								</a>
+							)
+						}
+					</div>
+
+					{
+						project.featured && (
+							<p class="project-eyebrow">{i18n(I18nKey.projectsFeatured)}</p>
+						)
+					}
+
+					<div class="project-heading">
+						<h3 class="project-title">{project.title}</h3>
+						<span class="project-status">{getStatusText(project.status)}</span>
+					</div>
+
+					<p class="project-description">{project.description}</p>
+
+					{
+						hasTags && (
+							<div class="project-tag-row">
+								{project.tags!.map((tag) => (
+									<span class="project-tag">#{tag}</span>
+								))}
+							</div>
+						)
+					}
+
+					{
+						project.techStack && project.techStack.length > 0 && (
+							<div class="project-tech-row">
+								{project.techStack.slice(0, maxTechStack).map((tech) => (
+									<span class="project-tech-chip">{tech}</span>
+								))}
+								{project.techStack.length > maxTechStack && (
+									<span class="project-tech-chip project-tech-chip-muted">
+										+{project.techStack.length - maxTechStack}
+									</span>
+								)}
+							</div>
+						)
+					}
+
+					{
+						(hasVisitUrl || hasSourceCode) && (
+							<div class="project-actions">
+								{hasVisitUrl && (
+									<a
+										href={project.visitUrl!}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="project-action project-action-primary"
+									>
+										<Icon
+											name="material-symbols:open-in-new-rounded"
+											class="text-[1.15rem]"
+										/>
+										{i18n(I18nKey.projectsDemo)}
+									</a>
+								)}
+								{hasSourceCode && (
+									<a
+										href={project.sourceCode!}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="project-action project-action-secondary"
+									>
+										<Icon name="mdi:github" class="text-[1.15rem]" />
+										{i18n(I18nKey.projectsGitHub)}
+									</a>
+								)}
+							</div>
+						)
+					}
+
+					<div class="project-watermark" aria-hidden="true">
+						{watermarkText}
+					</div>
+				</div>
 			</div>
-	</div>
+		)
+	}
 </article>
 
 <style>
@@ -228,6 +411,336 @@ const watermarkText =
 		box-shadow:
 			0 36px 72px -42px color-mix(in oklab, var(--primary) 32%, transparent),
 			0 16px 32px -22px color-mix(in oklab, var(--primary) 16%, transparent);
+	}
+
+	.project-card-shell-trip {
+		padding: 2.3rem 2rem 1.8rem;
+		border-radius: 2rem;
+		border-color: rgba(212, 175, 55, 0.18);
+		background:
+			radial-gradient(circle at top right, rgba(255, 215, 0, 0.08), transparent 24%),
+			radial-gradient(circle at bottom left, rgba(107, 168, 255, 0.12), transparent 32%),
+			linear-gradient(135deg, #10223b 0%, #18345b 52%, #223f69 100%);
+		box-shadow:
+			0 32px 80px -42px rgba(8, 15, 32, 0.88),
+			inset 0 1px 0 rgba(255, 255, 255, 0.04);
+	}
+
+	.project-card-trip:hover .project-card-shell-trip {
+		border-color: rgba(255, 215, 0, 0.34);
+		box-shadow:
+			0 40px 92px -46px rgba(8, 15, 32, 0.92),
+			0 0 0 1px rgba(212, 175, 55, 0.05);
+	}
+
+	.trip-glow {
+		position: absolute;
+		border-radius: 999px;
+		pointer-events: none;
+		filter: blur(18px);
+		opacity: 0.72;
+	}
+
+	.trip-glow-top {
+		top: -2.5rem;
+		right: -2.5rem;
+		width: 13rem;
+		height: 13rem;
+		background: radial-gradient(circle, rgba(255, 215, 0, 0.14), transparent 72%);
+	}
+
+	.trip-glow-bottom {
+		left: -2.5rem;
+		bottom: -3rem;
+		width: 14rem;
+		height: 14rem;
+		background: radial-gradient(circle, rgba(103, 174, 255, 0.12), transparent 72%);
+	}
+
+	.project-trip-top-tags,
+	.project-trip-tag-row,
+	.project-trip-tech-row,
+	.project-trip-actions,
+	.project-trip-badges {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		flex-wrap: wrap;
+	}
+
+	.project-trip-top-tags {
+		gap: 0.9rem;
+	}
+
+	.project-trip-pill,
+	.project-trip-badge,
+	.project-trip-tag,
+	.project-trip-tech-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.42rem;
+		border-radius: 999px;
+	}
+
+	.project-trip-pill {
+		padding: 0.62rem 1.12rem;
+		background: rgba(255, 215, 0, 0.08);
+		border: 1px solid rgba(212, 175, 55, 0.18);
+		color: #dfd1aa;
+		font-size: 0.96rem;
+		font-weight: 600;
+		letter-spacing: 0.05em;
+	}
+
+	.project-trip-pill.is-gold {
+		background: rgba(255, 215, 0, 0.18);
+		border-color: rgba(255, 215, 0, 0.92);
+		color: #ffd95b;
+		box-shadow: 0 12px 28px -24px rgba(255, 215, 0, 0.7);
+	}
+
+	.project-trip-header {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 1rem 1.4rem;
+		flex-wrap: wrap;
+		margin-top: 1.8rem;
+	}
+
+	.project-trip-title {
+		font-family: "萝莉体 第二版", "ZenMaruGothic-Medium", serif;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.02em;
+		font-size: clamp(3.2rem, 6.4vw, 4.65rem);
+		font-weight: 400;
+		line-height: 0.98;
+		letter-spacing: 0.08em;
+		color: #f4e7c0;
+		text-shadow:
+			0 2px 0 rgba(80, 52, 18, 0.22),
+			0 0 18px rgba(212, 175, 55, 0.16),
+			0 10px 28px rgba(6, 14, 29, 0.34);
+		filter: saturate(1.03);
+	}
+
+	.project-trip-title-char {
+		display: inline-block;
+		transform-origin: center 80%;
+	}
+
+	.project-trip-title-char:nth-child(1) {
+		transform: translateY(0.02em) rotate(-6deg);
+	}
+
+	.project-trip-title-char:nth-child(2) {
+		transform: translateY(-0.03em) rotate(3deg);
+	}
+
+	.project-trip-title-char:nth-child(3) {
+		transform: translateY(0.03em) rotate(-3deg);
+	}
+
+	.project-trip-title-char:nth-child(4) {
+		transform: translateY(-0.04em) rotate(4deg);
+	}
+
+	.project-trip-title-char:nth-child(5) {
+		transform: translateY(0.01em) rotate(-5deg);
+	}
+
+	.project-trip-title-char:nth-child(6) {
+		transform: translateY(-0.02em) rotate(2deg);
+	}
+
+	.project-trip-badges {
+		gap: 0.7rem;
+		align-items: center;
+	}
+
+	.project-trip-badge {
+		padding: 0.5rem 0.98rem;
+		border: 1px solid rgba(212, 175, 55, 0.18);
+		background: rgba(212, 175, 55, 0.12);
+		color: #e4d7b7;
+		font-size: 0.96rem;
+		font-weight: 600;
+	}
+
+	.project-trip-badge.is-success {
+		background: rgba(91, 214, 156, 0.16);
+		border-color: rgba(91, 214, 156, 0.28);
+		color: #79dfab;
+	}
+
+	.project-trip-description {
+		position: relative;
+		z-index: 1;
+		margin-top: 1.1rem;
+		max-width: 52rem;
+		font-size: 1.22rem;
+		line-height: 1.9;
+		color: rgba(237, 231, 217, 0.92);
+	}
+
+	.project-trip-description strong {
+		color: #ffd54b;
+		font-weight: 800;
+	}
+
+	.project-trip-tag-row {
+		gap: 0.72rem;
+		margin-top: 1.25rem;
+	}
+
+	.project-trip-tag {
+		padding: 0.4rem 0.98rem;
+		background: rgba(212, 175, 55, 0.08);
+		border: 1px solid rgba(212, 175, 55, 0.18);
+		color: #d3c29b;
+		font-size: 0.9rem;
+		font-weight: 600;
+		font-family: "萝莉体 第二版", "ZenMaruGothic-Medium", serif;
+		letter-spacing: 0.04em;
+		transition:
+			transform 0.2s ease,
+			border-color 0.2s ease,
+			background 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.project-trip-tag:hover {
+		transform: translateY(-1px);
+		background: rgba(255, 215, 0, 0.16);
+		border-color: rgba(255, 215, 0, 0.5);
+		color: #ffe082;
+	}
+
+	.project-trip-tech-row {
+		gap: 0.85rem;
+		margin-top: 1.75rem;
+		padding: 1.15rem 0;
+		border-top: 1px solid rgba(212, 175, 55, 0.16);
+		border-bottom: 1px solid rgba(212, 175, 55, 0.16);
+	}
+
+	.project-trip-tech-chip {
+		padding: 0.56rem 1rem;
+		background: rgba(7, 18, 34, 0.34);
+		border: 1px solid rgba(212, 175, 55, 0.14);
+		color: #d9cfb5;
+		font-size: 0.98rem;
+		font-weight: 700;
+	}
+
+	.project-trip-tech-chip.highlight {
+		color: #ffd54b;
+		border-color: rgba(255, 215, 0, 0.46);
+	}
+
+	.project-trip-tech-chip.muted {
+		color: rgba(217, 207, 181, 0.7);
+	}
+
+	.project-trip-actions {
+		gap: 1.1rem;
+		margin-top: 1.85rem;
+	}
+
+	.project-trip-action {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.68rem;
+		min-width: 10.9rem;
+		padding: 1.08rem 2rem;
+		border-radius: 0.95rem;
+		font-size: 1.34rem;
+		font-weight: 700;
+		font-family: "萝莉体 第二版", "ZenMaruGothic-Medium", serif;
+		letter-spacing: 0.1em;
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+		transition:
+			transform 0.2s ease,
+			box-shadow 0.2s ease,
+			background 0.2s ease,
+			border-color 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.project-trip-action:hover {
+		transform: translateY(-2px);
+	}
+
+	.project-trip-action-primary {
+		min-width: 11.6rem;
+		background: linear-gradient(145deg, #d1a427 0%, #ffd53a 58%, #ffe46f 100%);
+		color: #10223b;
+		box-shadow:
+			inset 0 1px 0 rgba(255, 247, 194, 0.38),
+			0 0 0 1px rgba(255, 215, 0, 0.08),
+			0 18px 34px -16px rgba(255, 215, 0, 0.52),
+			0 10px 28px -12px rgba(255, 215, 0, 0.28);
+	}
+
+	.project-trip-action-primary:hover {
+		background: linear-gradient(145deg, #deb23a 0%, #ffe257 56%, #fff08a 100%);
+		box-shadow:
+			inset 0 1px 0 rgba(255, 251, 221, 0.4),
+			0 0 0 1px rgba(255, 215, 0, 0.12),
+			0 24px 42px -16px rgba(255, 215, 0, 0.62),
+			0 12px 32px -12px rgba(255, 215, 0, 0.36);
+	}
+
+	.project-trip-action-secondary {
+		min-width: 9.8rem;
+		padding-inline: 1.8rem;
+		background: rgba(17, 35, 61, 0.3);
+		border: 1.5px solid rgba(212, 175, 55, 0.42);
+		color: #eadbb6;
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.03),
+			0 14px 28px -24px rgba(8, 15, 32, 0.72);
+	}
+
+	.project-trip-action-secondary:hover {
+		border-color: rgba(255, 215, 0, 0.74);
+		color: #ffe082;
+		background: rgba(212, 175, 55, 0.08);
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.04),
+			0 16px 30px -22px rgba(8, 15, 32, 0.82);
+	}
+
+	.project-trip-footer {
+		position: relative;
+		z-index: 1;
+		margin-top: 1.7rem;
+		padding-top: 1.15rem;
+		border-top: 1px solid rgba(212, 175, 55, 0.1);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.project-trip-copy {
+		color: rgba(173, 163, 139, 0.7);
+		font-size: 0.92rem;
+	}
+
+	.project-trip-rip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.22rem;
+		color: rgba(212, 175, 55, 0.45);
+		font-size: 0.95rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
 	}
 
 	.project-media {
@@ -543,6 +1056,10 @@ const watermarkText =
 			grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
 		}
 
+		.project-card-shell-trip {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
 		.project-media {
 			min-height: 100%;
 		}
@@ -555,6 +1072,62 @@ const watermarkText =
 	@media (max-width: 768px) {
 		.project-card-shell {
 			border-radius: 1.45rem;
+		}
+
+		.project-card-shell-trip {
+			padding: 1.5rem 1.15rem 1.3rem;
+			border-radius: 1.6rem;
+		}
+
+		.project-trip-top-tags {
+			gap: 0.72rem;
+		}
+
+		.project-trip-pill,
+		.project-trip-badge {
+			padding: 0.52rem 0.88rem;
+			font-size: 0.88rem;
+		}
+
+		.project-trip-header {
+			margin-top: 1.35rem;
+		}
+
+		.project-trip-title {
+			font-size: 2.72rem;
+			letter-spacing: 0.06em;
+		}
+
+		.project-trip-description {
+			font-size: 1.05rem;
+			line-height: 1.78;
+		}
+
+		.project-trip-tech-row {
+			gap: 0.7rem;
+			margin-top: 1.35rem;
+			padding: 0.95rem 0;
+		}
+
+		.project-trip-tech-chip {
+			font-size: 0.92rem;
+		}
+
+		.project-trip-actions {
+			flex-direction: column;
+			gap: 0.95rem;
+			margin-top: 1.35rem;
+		}
+
+		.project-trip-action {
+			width: 100%;
+			font-size: 1.18rem;
+			padding: 0.98rem 1.4rem;
+		}
+
+		.project-trip-footer {
+			margin-top: 1.3rem;
+			padding-top: 1rem;
 		}
 
 		.project-media {
@@ -617,6 +1190,14 @@ const watermarkText =
 		box-shadow:
 			0 28px 60px -42px rgba(0, 0, 0, 0.72),
 			0 10px 24px -18px rgba(0, 0, 0, 0.38);
+	}
+
+	:global(.dark) .project-card-shell-trip {
+		border-color: rgba(212, 175, 55, 0.22);
+		background:
+			radial-gradient(circle at top right, rgba(255, 215, 0, 0.08), transparent 24%),
+			radial-gradient(circle at bottom left, rgba(103, 174, 255, 0.12), transparent 32%),
+			linear-gradient(135deg, #0f1d34 0%, #18345b 52%, #203c64 100%);
 	}
 
 	:global(.dark) .project-media-badge {
