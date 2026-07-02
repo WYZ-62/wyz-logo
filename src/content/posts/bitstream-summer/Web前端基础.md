@@ -12,7 +12,7 @@ alias: web-frontend-basics
 
 # Web前端基础
 
-这份原始笔记覆盖了一条很完整的前端入门主线：先理解 Web 和 HTTP，再进入 HTML、CSS、JavaScript，最后补上 TypeScript 的基础类型系统。  
+这份笔记覆盖了一条很完整的前端入门主线：先理解 Web 和 HTTP，再进入 HTML、CSS、JavaScript，最后补上 TypeScript 的基础类型系统。  
 重新整理后，它更适合作为一篇前端初学阶段可以反复翻阅的基础速查笔记。
 
 ## 一、先理解 Web 前端到底在做什么
