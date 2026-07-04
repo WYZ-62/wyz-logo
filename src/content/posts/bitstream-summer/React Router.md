@@ -2,7 +2,7 @@
 title: React Router 路由入门教程
 published: 2026-07-03
 updated: 2026-07-04
-description: 从 SPA 为什么需要路由，到 React Router 的基础配置、动态路由、嵌套路由与编程式导航，整理一篇适合入门和复习的路由基础笔记。
+description: 从 SPA 为什么需要路由，到 React Router 的基础配置、动态路由、嵌套路由、编程式导航、404 页面、查询参数与数据加载，整理一篇适合入门和复习的路由基础笔记。
 tags: [React, React Router, SPA]
 category: 前端
 author: WYZ
@@ -12,8 +12,6 @@ alias: react-router-basics
 
 # React Router 路由入门教程
 
-这篇文章根据 `D:\Code\Notes\项目\博客\Class\UI` 目录下的课堂截图整理而成，按“为什么需要路由 -> 如何配置 -> 常见用法 -> 重点总结”的顺序提炼重点，适合作为 React Router 入门笔记。
-放在「比特流夏日」专题里，它正好承接 React 基础之后的页面组织与导航能力，适合作为前端路由这一环的专题补充。
 
 ## 0. 为什么前端需要路由
 
@@ -282,6 +280,52 @@ function Nav() {
 - 会自动接入路由系统
 - 能与前进后退、组件切换保持同步
 
+### 2.5 使用 `NavLink` 高亮当前导航
+
+`Link` 只负责跳转，如果还想根据当前路由高亮导航项，可以使用 `NavLink`。
+
+`NavLink` 和 `Link` 的区别是：
+
+- `Link`：只负责跳转
+- `NavLink`：既负责跳转，也能知道当前链接是否处于激活状态
+
+常见写法如下：
+
+```tsx
+import { NavLink } from 'react-router-dom'
+
+function Nav() {
+  return (
+    <nav>
+      <NavLink
+        to="/"
+        className={({ isActive }) => isActive ? 'active' : ''}
+      >
+        首页
+      </NavLink>
+
+      <NavLink
+        to="/about"
+        className={({ isActive }) => isActive ? 'active' : ''}
+      >
+        关于
+      </NavLink>
+    </nav>
+  )
+}
+```
+
+可以配合 CSS 实现当前页面高亮：
+
+```css
+.active {
+  color: #1677ff;
+  font-weight: bold;
+}
+```
+
+实际项目中，侧边栏、顶部导航、后台管理菜单等场景，通常都会优先考虑 `NavLink`。
+
 ## 3. 动态路由
 
 ### 3.1 什么是动态路由
@@ -485,9 +529,162 @@ navigate('/home', { replace: true })
 - `navigate(1)`：前进一步
 - `replace: true`：替换当前历史记录，不保留当前页面
 
-## 6. 路由配置对象与常用 API
+## 6. 查询参数、404 页面与数据加载
 
-### 6.1 常见路由对象字段
+### 6.1 使用 `useSearchParams` 处理查询参数
+
+查询参数通常用于筛选、搜索、分页等场景。
+
+例如：
+
+- `/products?page=1`
+- `/products?keyword=react`
+- `/products?page=2&keyword=router`
+
+React Router 提供了 `useSearchParams()` 来读取和修改查询参数。
+
+```tsx
+import { useSearchParams } from 'react-router-dom'
+
+function Products() {
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const page = searchParams.get('page') || '1'
+  const keyword = searchParams.get('keyword') || ''
+
+  function handleSearch() {
+    setSearchParams({
+      page: '1',
+      keyword: 'react'
+    })
+  }
+
+  return (
+    <div>
+      <h1>商品列表</h1>
+      <p>当前页码：{page}</p>
+      <p>搜索关键词：{keyword}</p>
+
+      <button onClick={handleSearch}>搜索 React</button>
+    </div>
+  )
+}
+```
+
+这里的重点是：
+
+- `searchParams.get('page')` 用来读取查询参数
+- `setSearchParams()` 用来修改查询参数
+- 修改查询参数会更新地址栏，也会触发组件重新渲染
+
+### 6.2 配置 404 页面
+
+当用户访问一个不存在的路径时，应该显示一个友好的 404 页面。
+
+在 React Router 中，可以使用 `path: '*'` 匹配所有未命中的路径。
+
+```tsx
+function NotFound() {
+  return (
+    <div>
+      <h1>404</h1>
+      <p>页面不存在</p>
+      <Link to="/">返回首页</Link>
+    </div>
+  )
+}
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Home />
+  },
+  {
+    path: '/about',
+    element: <About />
+  },
+  {
+    path: '*',
+    element: <NotFound />
+  }
+])
+```
+
+`path: '*'` 通常放在路由配置的最后，用来兜底处理所有没有匹配到的路径。
+
+### 6.3 `errorElement` 与 404 的区别
+
+`path: '*'` 和 `errorElement` 都和异常场景有关，但它们解决的问题不一样。
+
+| 写法 | 作用 |
+| --- | --- |
+| `path: '*'` | 访问不存在的路径时显示 404 页面 |
+| `errorElement` | 当前路由渲染、加载数据或执行逻辑出错时显示错误页面 |
+
+简单理解：
+
+- 地址不存在，用 `path: '*'`
+- 页面执行过程中出错，用 `errorElement`
+
+### 6.4 使用 `loader` 加载页面数据
+
+如果使用 `createBrowserRouter`，还可以在路由对象中配置 `loader`。
+
+`loader` 的作用是：进入页面前先准备好这个页面需要的数据。
+
+```tsx
+import {
+  createBrowserRouter,
+  useLoaderData
+} from 'react-router-dom'
+
+async function userLoader({ params }: { params: { id?: string } }) {
+  const res = await fetch(`/api/users/${params.id}`)
+  return res.json()
+}
+
+function User() {
+  const user = useLoaderData() as {
+    id: string
+    name: string
+  }
+
+  return (
+    <div>
+      <h1>用户详情</h1>
+      <p>用户 ID：{user.id}</p>
+      <p>用户名：{user.name}</p>
+    </div>
+  )
+}
+
+const router = createBrowserRouter([
+  {
+    path: '/user/:id',
+    element: <User />,
+    loader: userLoader
+  }
+])
+```
+
+这段代码的执行流程可以理解为：
+
+1. 用户访问 `/user/123`
+2. React Router 匹配到 `/user/:id`
+3. 执行 `userLoader`
+4. `User` 组件通过 `useLoaderData()` 获取数据
+5. 页面渲染用户详情
+
+对于入门阶段，可以先记住：
+
+- 页面参数用 `useParams()`
+- 查询参数用 `useSearchParams()`
+- 进入页面前加载数据用 `loader`
+- 在页面里读取 `loader` 返回值用 `useLoaderData()`
+
+## 7. 路由配置对象与常用 API
+
+### 7.1 常见路由对象字段
 
 | 字段 | 作用 |
 | --- | --- |
@@ -495,17 +692,19 @@ navigate('/home', { replace: true })
 | `element` | 当前路径渲染的组件 |
 | `children` | 嵌套路由数组 |
 | `index` | 是否为默认子路由 |
+| `loader` | 页面渲染前加载数据，可选 |
 | `errorElement` | 错误边界组件，可选 |
 
-### 6.2 常见组件
+### 7.2 常见组件
 
 | 组件 | 作用 | 使用场景 |
 | --- | --- | --- |
 | `RouterProvider` | 提供路由上下文 | 根组件挂载路由 |
 | `Link` | 声明式导航 | 页面跳转且不刷新 |
+| `NavLink` | 带激活状态的导航链接 | 导航栏、侧边栏高亮 |
 | `Outlet` | 子路由出口 | 嵌套路由布局 |
 
-### 6.3 常见 Hooks
+### 7.3 常见 Hooks
 
 | Hook | 作用 | 典型场景 |
 | --- | --- | --- |
@@ -513,31 +712,35 @@ navigate('/home', { replace: true })
 | `useNavigate()` | 编程式跳转 | 登录成功后跳转 |
 | `useLocation()` | 获取当前地址信息 | 条件渲染、路径监听 |
 | `useSearchParams()` | 获取和设置查询参数 | 筛选、分页 |
+| `useLoaderData()` | 获取 `loader` 返回的数据 | 页面数据预加载 |
 
-## 7. 学习小结
+## 8. 学习小结
 
 React Router 的学习主线可以概括成下面几步：
 
 1. 先理解 SPA 为什么需要路由
 2. 再掌握 `createBrowserRouter` 和 `RouterProvider` 的基础配置
 3. 学会用 `Link` 做无刷新导航
-4. 学会用 `useParams` 处理动态路由
-5. 学会用 `Outlet` 组织嵌套路由
-6. 学会用 `useNavigate` 完成编程式跳转
+4. 学会用 `NavLink` 做当前导航高亮
+5. 学会用 `useParams` 处理动态路由
+6. 学会用 `Outlet` 组织嵌套路由
+7. 学会用 `useNavigate` 完成编程式跳转
+8. 学会用 `useSearchParams` 同步查询参数
+9. 学会配置 404 页面和基础 `loader`
 
 如果把这些内容真正掌握住，后面继续学习：
 
 - 权限路由
-- 404 页面
 - 路由懒加载
-- 查询参数同步
-- 数据路由
+- 表单 action
+- 错误边界
+- 更完整的数据路由
 
 就会顺畅很多。
 
-## 8. 常用代码片段
+## 9. 常用代码片段
 
-### 8.1 基础路由
+### 9.1 基础路由
 
 ```tsx
 const router = createBrowserRouter([
@@ -556,7 +759,7 @@ function App() {
 }
 ```
 
-### 8.2 动态路由
+### 9.2 动态路由
 
 ```tsx
 const router = createBrowserRouter([
@@ -569,7 +772,7 @@ const router = createBrowserRouter([
 const { id } = useParams()
 ```
 
-### 8.3 嵌套路由
+### 9.3 嵌套路由
 
 ```tsx
 function Layout() {
@@ -582,7 +785,7 @@ function Layout() {
 }
 ```
 
-### 8.4 编程式导航
+### 9.4 编程式导航
 
 ```tsx
 const navigate = useNavigate()
@@ -590,4 +793,64 @@ const navigate = useNavigate()
 navigate('/about')
 navigate(-1)
 navigate('/home', { replace: true })
+```
+
+### 9.5 当前导航高亮
+
+```tsx
+<NavLink
+  to="/about"
+  className={({ isActive }) => isActive ? 'active' : ''}
+>
+  关于
+</NavLink>
+```
+
+### 9.6 查询参数
+
+```tsx
+const [searchParams, setSearchParams] = useSearchParams()
+
+const page = searchParams.get('page') || '1'
+
+setSearchParams({
+  page: '2'
+})
+```
+
+### 9.7 404 页面
+
+```tsx
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Home />
+  },
+  {
+    path: '*',
+    element: <NotFound />
+  }
+])
+```
+
+### 9.8 数据加载
+
+```tsx
+async function userLoader({ params }: { params: { id?: string } }) {
+  const res = await fetch(`/api/users/${params.id}`)
+  return res.json()
+}
+
+function User() {
+  const user = useLoaderData()
+  return <h1>{user.name}</h1>
+}
+
+const router = createBrowserRouter([
+  {
+    path: '/user/:id',
+    element: <User />,
+    loader: userLoader
+  }
+])
 ```
