@@ -1015,9 +1015,27 @@ Promise 表示异步操作的最终结果。
 
 三种状态：
 
-- `pending`
-- `fulfilled`
-- `rejected`
+- `pending`：等待中，表示异步任务还没有拿到最终结果
+- `fulfilled`：已完成，表示异步任务执行成功，通常会调用 `resolve()`
+- `rejected`：已拒绝，表示异步任务执行失败，通常会调用 `reject()`
+
+可以把 Promise 理解成“先挂起，后出结果”的过程：
+
+- Promise 创建出来时，默认先处于 `pending`
+- 如果任务成功完成，状态会从 `pending` 变成 `fulfilled`
+- 如果任务执行失败，状态会从 `pending` 变成 `rejected`
+
+要特别注意：Promise 的状态一旦从 `pending` 变成 `fulfilled` 或 `rejected`，就不会再改变，也不能再回到 `pending`。  
+也就是说，它的状态流转只有两条路径：
+
+- `pending -> fulfilled`
+- `pending -> rejected`
+
+在实际使用中：
+
+- `then()` 主要处理成功结果
+- `catch()` 主要处理失败结果
+- `finally()` 不管成功还是失败都会执行，常用于收尾操作
 
 ```js
 const promise = new Promise((resolve, reject) => {
@@ -1279,7 +1297,7 @@ interface User {
 }
 ```
 
-## 八、把这篇内容记成一条复习主线
+## 八、学习主线
 
 建议优先掌握下面这些内容：
 
