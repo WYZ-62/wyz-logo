@@ -2,8 +2,7 @@
 title: 如何使用EdgeOne Pages部署博客网站
 published: 2026-06-05
 updated: 2026-06-06
-pinned: true
-priority: 0
+pinned: false
 description: 记录一次把 Astro + Mizuki 博客部署到腾讯云 EdgeOne Pages 的完整过程，包括 GitHub、Actions、构建配置、域名与排障细节。
 tags: [EdgeOne, Astro]
 category: 部署

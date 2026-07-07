@@ -2,6 +2,7 @@
 	import Icon from "@iconify/svelte";
 
 	import type { Song } from "../../music-player/types";
+	import SongVariantButton from "../../music-player/atoms/SongVariantButton.svelte";
 
 	interface Props {
 		currentSong: Song;
@@ -11,6 +12,7 @@
 		isMuted: boolean;
 		onToggleMute: () => void;
 		onSetVolume: (volume: number) => void;
+		onSwitchVariant?: () => void;
 	}
 
 	const {
@@ -21,6 +23,7 @@
 		isMuted,
 		onToggleMute,
 		onSetVolume,
+		onSwitchVariant,
 	}: Props = $props();
 
 	const currentTimeLabel = $derived(
@@ -78,6 +81,11 @@
 <div class="flex flex-col min-w-0 flex-1 overflow-hidden">
 	<div class="title-row">
 		<span class="title-text truncate">{currentSong.title}</span>
+		<SongVariantButton
+			song={currentSong}
+			size="sidebar"
+			onSwitch={onSwitchVariant}
+		/>
 	</div>
 	<div class="artist-row">
 		<span class="artist-text truncate">{currentSong.artist}</span>
@@ -130,12 +138,18 @@
 <style>
 	.title-row {
 		margin-bottom: 0.06rem;
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		min-width: 0;
 	}
 
 	.title-text {
 		font-weight: 600;
 		color: var(--content-main);
 		line-height: 1.1;
+		min-width: 0;
+		flex: 1;
 	}
 
 	:global(.dark) .title-text {

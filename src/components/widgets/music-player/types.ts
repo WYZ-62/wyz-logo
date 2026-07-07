@@ -1,3 +1,11 @@
+export interface SongVariant {
+	label: string;
+	url: string;
+	duration?: number;
+	title?: string;
+	artist?: string;
+}
+
 export interface Song {
 	id: number;
 	title: string;
@@ -5,6 +13,8 @@ export interface Song {
 	cover: string;
 	url: string;
 	duration: number;
+	variants?: SongVariant[];
+	variantIndex?: number;
 }
 
 export type PlayerMode = "local" | "meting";

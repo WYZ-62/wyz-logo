@@ -4,6 +4,10 @@ import { Icon } from "astro-icon/components"
 import { navBarConfig, siteConfig } from "../../../config"
 import { LinkPresets } from "../../../constants/link-presets"
 import { LinkPreset, type NavBarLink } from "../../../types/config"
+import {
+	DEFAULT_NAMING_STYLE,
+	NAMING_STYLE_STORAGE_KEY,
+} from "../../../utils/naming-style"
 import { url } from "../../../utils/url-utils"
 import LayoutSwitch from "../../control/LayoutSwitch.svelte"
 import ThemeSwitch from "../../control/ThemeSwitch.svelte"
@@ -49,43 +53,76 @@ const hasIconPngFallback = rawIcon?.endsWith(".png") && !isIconExternal;
 const logoWebpSrc = hasLogoPngFallback ? logoSrc.replace(/\.png$/i, ".webp") : logoSrc;
 const iconWebpSrc = hasIconPngFallback ? iconSrc.replace(/\.png$/i, ".webp") : iconSrc;
 ---
-<div id="navbar" class="z-50 onload-animation group" data-transparent-mode={navbarTransparentMode} data-is-home={isHomePage}>
+<div
+	id="navbar"
+	class="z-50 onload-animation group"
+	data-transparent-mode={navbarTransparentMode}
+	data-is-home={isHomePage}
+	data-default-naming-style={DEFAULT_NAMING_STYLE}
+	data-naming-style-storage-key={NAMING_STYLE_STORAGE_KEY}
+>
     <div class="absolute h-8 left-0 right-0 -top-8 bg-[var(--card-bg)] transition"></div> <!-- used for onload animation -->
     <div class:list={[className, "!overflow-visible max-w-[var(--page-width)] h-[4.5rem] mx-auto flex items-center justify-between px-4"]}>
-        <a href={url('/')} class="btn-plain scale-animation rounded-lg h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] px-5 font-bold active:scale-95 shrink-0 transition-all duration-300">
-            <div class="flex flex-row items-center text-md">
-				{/* 使用navbarTitle配置或默认配置 */}
-                {siteConfig.navbarTitle ? (
-                    siteConfig.navbarTitle.mode === "logo" ? (
-                        hasLogoPngFallback ? (
-                            <picture>
-                                <source srcset={logoWebpSrc} type="image/webp" />
-                                <img src={logoSrc} alt={siteConfig.navbarTitle.text} class="h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] max-w-full object-contain transition-all duration-300" loading="lazy" />
-                            </picture>
-                        ) : (
-                            <img src={logoSrc} alt={siteConfig.navbarTitle.text} class="h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] max-w-full object-contain transition-all duration-300" loading="lazy" />
-                        )
-                    ) : (
-                        <>
-                            {hasIconPngFallback ? (
-                                <picture>
-                                    <source srcset={iconWebpSrc} type="image/webp" />
-                                    <img src={iconSrc} alt="" class="h-[1.75rem] w-[1.75rem] mr-2 object-contain" loading="lazy" />
-                                </picture>
-                            ) : (
-                                <img src={iconSrc} alt="" class="h-[1.75rem] w-[1.75rem] mr-2 object-contain" loading="lazy" />
-                            )}
-                            <span class="dark:text-white text-black">{siteConfig.navbarTitle.text}</span>
-                        </>
-                    )
-                ) : (
-                    <>
-                        <Icon name="material-symbols:home-pin-outline" class="text-[1.75rem] mr-2" />
-                        <span class="dark:text-white text-black">{siteConfig.title}</span>
-                    </>
-                )}
-            </div>
-        </a>
+		<div class="flex items-center gap-2 shrink-0">
+			<button
+				type="button"
+				aria-label="切换命名风格"
+				aria-pressed="false"
+				title="切换命名风格"
+				class="naming-style-switch btn-plain scale-animation rounded-full h-9 px-1.5 active:scale-95"
+				data-naming-style-switch
+				data-naming-style={DEFAULT_NAMING_STYLE}
+			>
+				<span class="naming-style-switch__rail">
+					<span
+						class="naming-style-switch__chip"
+						data-style-chip="default"
+					>
+						今
+					</span>
+					<span
+						class="naming-style-switch__chip"
+						data-style-chip="poetic"
+					>
+						雅
+					</span>
+				</span>
+			</button>
+			<a href={url('/')} class="btn-plain scale-animation rounded-lg h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] px-5 font-bold active:scale-95 shrink-0 transition-all duration-300">
+				<div class="flex flex-row items-center text-md">
+					{/* 使用navbarTitle配置或默认配置 */}
+					{siteConfig.navbarTitle ? (
+						siteConfig.navbarTitle.mode === "logo" ? (
+							hasLogoPngFallback ? (
+								<picture>
+									<source srcset={logoWebpSrc} type="image/webp" />
+									<img src={logoSrc} alt={siteConfig.navbarTitle.text} class="h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] max-w-full object-contain transition-all duration-300" loading="lazy" />
+								</picture>
+							) : (
+								<img src={logoSrc} alt={siteConfig.navbarTitle.text} class="h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] max-w-full object-contain transition-all duration-300" loading="lazy" />
+							)
+						) : (
+							<>
+								{hasIconPngFallback ? (
+									<picture>
+										<source srcset={iconWebpSrc} type="image/webp" />
+										<img src={iconSrc} alt="" class="h-[1.75rem] w-[1.75rem] mr-2 object-contain" loading="lazy" />
+									</picture>
+								) : (
+									<img src={iconSrc} alt="" class="h-[1.75rem] w-[1.75rem] mr-2 object-contain" loading="lazy" />
+								)}
+								<span class="dark:text-white text-black">{siteConfig.navbarTitle.text}</span>
+							</>
+						)
+					) : (
+						<>
+							<Icon name="material-symbols:home-pin-outline" class="text-[1.75rem] mr-2" />
+							<span class="dark:text-white text-black">{siteConfig.title}</span>
+						</>
+					)}
+				</div>
+			</a>
+		</div>
         <div id="navbar-links-container" class="hidden md:flex items-center space-x-1 transition-opacity duration-300">
             {links.map((l) => {
                 return <DropdownMenu link={l} />;
@@ -212,6 +249,97 @@ async function loadButtonScript() {
 
 loadButtonScript();
 
+type ClientNamingStyle = "default" | "poetic";
+
+function getNamingStyleConfig(): {
+	defaultStyle: ClientNamingStyle;
+	storageKey: string;
+} {
+	const navbar = document.getElementById("navbar");
+	const defaultStyle =
+		navbar?.dataset.defaultNamingStyle === "poetic"
+			? "poetic"
+			: "default";
+
+	return {
+		defaultStyle,
+		storageKey:
+			navbar?.dataset.namingStyleStorageKey || "mizuki:naming-style",
+	};
+}
+
+function getNamingStyle(): ClientNamingStyle {
+	const { defaultStyle, storageKey } = getNamingStyleConfig();
+
+	try {
+		const savedStyle = localStorage.getItem(storageKey);
+		return savedStyle === "poetic" ? "poetic" : defaultStyle;
+	} catch (error) {
+		console.error("Failed to read naming style:", error);
+		return defaultStyle;
+	}
+}
+
+function applyNamingStyle(style: ClientNamingStyle) {
+	document.documentElement.dataset.namingStyle = style;
+
+	document.querySelectorAll("[data-naming-label]").forEach((label) => {
+		const defaultLabel =
+			label.getAttribute("data-default-label") ||
+			label.textContent ||
+			"";
+		const poeticLabel =
+			label.getAttribute("data-poetic-label") || defaultLabel;
+
+		label.textContent = style === "poetic" ? poeticLabel : defaultLabel;
+	});
+
+	const switchButton = document.querySelector<HTMLElement>(
+		"[data-naming-style-switch]",
+	);
+	if (switchButton) {
+		switchButton.dataset.namingStyle = style;
+		switchButton.setAttribute("aria-pressed", String(style === "poetic"));
+		switchButton.setAttribute(
+			"title",
+			style === "poetic" ? "切换为默认命名" : "切换为雅称命名",
+		);
+	}
+}
+
+function bindNamingStyleSwitch() {
+	const switchButton = document.querySelector<HTMLElement>(
+		"[data-naming-style-switch]",
+	);
+	if (!switchButton || switchButton.dataset.namingStyleBound === "true") {
+		return;
+	}
+
+	switchButton.dataset.namingStyleBound = "true";
+	switchButton.addEventListener("click", () => {
+		const { defaultStyle, storageKey } = getNamingStyleConfig();
+		const nextStyle: ClientNamingStyle =
+			getNamingStyle() === "poetic" ? defaultStyle : "poetic";
+
+		try {
+			localStorage.setItem(storageKey, nextStyle);
+		} catch (error) {
+			console.error("Failed to save naming style:", error);
+		}
+
+		applyNamingStyle(nextStyle);
+	});
+}
+
+function initNamingStyle() {
+	applyNamingStyle(getNamingStyle());
+	bindNamingStyleSwitch();
+}
+
+document.addEventListener("DOMContentLoaded", initNamingStyle);
+document.addEventListener("astro:page-load", initNamingStyle);
+document.addEventListener("swup:contentReplaced", initNamingStyle);
+
 // 为semifull模式添加滚动检测逻辑
 function initSemifullScrollDetection() {
     const navbar = document.getElementById('navbar');
@@ -278,6 +406,1219 @@ if (document.readyState === 'loading') {
     initSemifullScrollDetection();
 }
 </script>
+
+<style>
+	@keyframes nav-poetic-cloud-breathe {
+		0% {
+			opacity: 0.72;
+			filter: blur(0.08rem);
+		}
+		100% {
+			opacity: 1;
+			filter: blur(0.03rem);
+		}
+	}
+
+	#navbar[data-is-home="false"] .naming-style-switch {
+		display: none;
+	}
+
+	.naming-style-switch {
+		min-width: 3.35rem;
+	}
+
+	.naming-style-switch__rail {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.2rem;
+		border-radius: 9999px;
+		background: color-mix(
+			in srgb,
+			var(--btn-plain-bg-hover) 82%,
+			white 18%
+		);
+	}
+
+	.naming-style-switch__chip {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.4rem;
+		height: 1.4rem;
+		border-radius: 9999px;
+		font-size: 0.75rem;
+		font-weight: 700;
+		color: rgb(15 23 42 / 0.65);
+		transition:
+			background-color 180ms ease,
+			color 180ms ease,
+			transform 180ms ease;
+	}
+
+	:global(.dark) .naming-style-switch__rail {
+		background: color-mix(
+			in srgb,
+			var(--btn-plain-bg-hover) 88%,
+			black 12%
+		);
+	}
+
+	:global(.dark) .naming-style-switch__chip {
+		color: rgb(248 250 252 / 0.72);
+	}
+
+	.naming-style-switch[data-naming-style="default"]
+		.naming-style-switch__chip[data-style-chip="default"],
+	.naming-style-switch[data-naming-style="poetic"]
+		.naming-style-switch__chip[data-style-chip="poetic"] {
+		background: var(--btn-regular-bg);
+		color: var(--btn-content);
+		transform: translateY(-1px);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label) {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		overflow: visible;
+		text-overflow: clip;
+		white-space: nowrap;
+		line-height: 1;
+		isolation: isolate;
+		contain: paint;
+		transition:
+			color 220ms ease,
+			transform 220ms ease,
+			text-shadow 220ms ease,
+			box-shadow 220ms ease,
+			background-color 220ms ease,
+			border-color 220ms ease,
+			background-position 240ms ease,
+			opacity 220ms ease;
+		font-family:
+			"Noto Serif SC",
+			"Source Han Serif SC",
+			"Songti SC",
+			"STSong",
+			"SimSun",
+			serif;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label::before),
+	:global(html[data-naming-style="poetic"] .nav-label::after) {
+		transition:
+			opacity 220ms ease,
+			transform 220ms ease,
+			box-shadow 220ms ease,
+			background-position 240ms ease,
+			filter 220ms ease;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top) {
+		min-height: 1.8rem;
+		padding: 0.3rem 0.72rem 0.34rem;
+		border-radius: 999px;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child) {
+		min-height: 1.55rem;
+		padding: 0.22rem 0.56rem 0.26rem;
+		border-radius: 0.82rem;
+		font-size: 0.94em;
+		letter-spacing: 0.1em;
+	}
+
+	:global(html[data-naming-style="poetic"] .btn-plain:hover .nav-label),
+	:global(html[data-naming-style="poetic"] .btn-plain:focus-visible .nav-label),
+	:global(html[data-naming-style="poetic"] .dropdown-trigger[aria-expanded="true"] .nav-label),
+	:global(html[data-naming-style="poetic"] .dropdown-item:hover .nav-label),
+	:global(html[data-naming-style="poetic"] [data-mobile-dropdown-trigger]:hover .nav-label),
+	:global(html[data-naming-style="poetic"] [data-mobile-dropdown-trigger][aria-expanded="true"] .nav-label),
+	:global(html[data-naming-style="poetic"] .mobile-submenu a:hover .nav-label) {
+		transform: translateY(-1px) scale(1.03);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="mountain"]) {
+		padding-left: 0.98rem;
+		border: 1px solid rgb(102 141 112 / 0.24);
+		background:
+			linear-gradient(180deg, rgb(239 247 241 / 0.98), rgb(222 236 226 / 0.86)),
+			radial-gradient(circle at 16% 18%, rgb(255 255 255 / 0.88), transparent 50%);
+		color: rgb(36 76 49 / 0.98);
+		font-weight: 800;
+		letter-spacing: 0.16em;
+		box-shadow: 0 0.2rem 0.55rem rgb(45 90 58 / 0.08);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="mountain"]::before) {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 15%;
+		bottom: 15%;
+		width: 0.26rem;
+		border-radius: 999px 0.14rem 0.14rem 999px;
+		background: linear-gradient(
+			180deg,
+			rgb(45 90 58 / 0.98) 0%,
+			rgb(106 154 122 / 0.9) 82%,
+			transparent 100%
+		);
+		clip-path: polygon(0% 0%, 100% 30%, 100% 70%, 0% 100%);
+		box-shadow: 0 0 0.75rem rgb(45 90 58 / 0.16);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="water"]) {
+		border: 1px solid rgb(129 171 189 / 0.24);
+		background:
+			linear-gradient(180deg, rgb(241 249 252 / 0.98), rgb(224 236 242 / 0.88)),
+			radial-gradient(circle at 18% 18%, rgb(255 255 255 / 0.88), transparent 52%);
+		color: rgb(49 95 118 / 0.98);
+		font-weight: 700;
+		letter-spacing: 0.16em;
+		box-shadow: 0 0.2rem 0.6rem rgb(90 122 138 / 0.08);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="water"]::after) {
+		content: "";
+		position: absolute;
+		left: 0.42rem;
+		right: 0.42rem;
+		bottom: 0.14rem;
+		height: 0.16rem;
+		border-radius: 999px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgb(138 179 201 / 0.86) 18%,
+			rgb(90 122 138 / 0.96) 50%,
+			rgb(138 179 201 / 0.86) 82%,
+			transparent
+		);
+		opacity: 0.82;
+		box-shadow: 0 0.08rem 0.55rem rgb(138 179 201 / 0.22);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="seal"]) {
+		padding-left: 1rem;
+		border: 1px solid rgb(197 157 151 / 0.28);
+		background: linear-gradient(180deg, rgb(252 245 242 / 0.98), rgb(247 232 228 / 0.88));
+		color: rgb(77 51 47 / 0.98);
+		font-weight: 700;
+		letter-spacing: 0.14em;
+		box-shadow: 0 0.2rem 0.58rem rgb(181 131 123 / 0.08);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="seal"]::before) {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 50%;
+		width: 0.52rem;
+		height: 0.52rem;
+		border-radius: 0.12rem;
+		background: linear-gradient(135deg, rgb(181 131 123), rgb(164 95 86));
+		transform: translateY(-50%) rotate(-8deg);
+		box-shadow: 0.12rem 0.12rem 0.42rem rgb(181 131 123 / 0.2);
+		outline: 1px solid rgb(252 245 242 / 0.58);
+		outline-offset: -0.08rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="ink"]) {
+		border-radius: 0.42rem;
+		border: 1px solid rgb(223 214 204 / 0.72);
+		background:
+			repeating-linear-gradient(
+				0deg,
+				transparent,
+				transparent 1rem,
+				rgb(200 185 170 / 0.12) 1rem,
+				rgb(200 185 170 / 0.12) 1.08rem
+			),
+			linear-gradient(180deg, rgb(248 243 236 / 0.99), rgb(239 231 220 / 0.9));
+		box-shadow:
+			inset 0 0 0 1px rgb(236 228 218 / 0.95),
+			0 0.18rem 0.48rem rgb(0 0 0 / 0.05);
+		font-family:
+			"萝莉体 第二版",
+			"KaiTi",
+			"STKaiti",
+			cursive;
+		letter-spacing: 0.14em;
+		color: rgb(26 26 26 / 0.98);
+		font-weight: 500;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="mist"]) {
+		color: rgb(100 120 130 / 0.16);
+		font-weight: 300;
+		letter-spacing: 0.22em;
+		filter: blur(0.16rem);
+		text-shadow: 0 0 3rem rgb(100 120 130 / 0.08);
+		opacity: 0.64;
+		transform: translateY(0.04rem) scale(0.985);
+		transition:
+			color 1.9s cubic-bezier(0.22, 1, 0.36, 1),
+			filter 2.08s cubic-bezier(0.22, 1, 0.36, 1),
+			letter-spacing 1.82s cubic-bezier(0.22, 1, 0.36, 1),
+			text-shadow 1.96s cubic-bezier(0.22, 1, 0.36, 1),
+			opacity 1.78s cubic-bezier(0.22, 1, 0.36, 1),
+			transform 1.84s cubic-bezier(0.22, 1, 0.36, 1);
+		animation: nav-poetic-cloud-breathe 7.4s ease-in-out infinite alternate;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="warm"]) {
+		border: 1px solid rgb(214 168 139 / 0.26);
+		background: linear-gradient(180deg, rgb(255 244 236 / 0.98), rgb(248 226 211 / 0.88));
+		color: rgb(180 96 55 / 0.98);
+		font-weight: 700;
+		letter-spacing: 0.16em;
+		text-shadow: 0 0 1.1rem rgb(196 122 74 / 0.08);
+		box-shadow: 0 0.22rem 0.62rem rgb(196 122 74 / 0.08);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="warm"]::after) {
+		content: "";
+		position: absolute;
+		left: 14%;
+		right: 14%;
+		bottom: 0.08rem;
+		height: 0.32rem;
+		border-radius: 999px;
+		background: radial-gradient(
+			ellipse at center,
+			rgb(196 122 74 / 0.26) 0%,
+			transparent 72%
+		);
+		filter: blur(0.16rem);
+		opacity: 0.86;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="forest"]) {
+		padding-inline: 0.84rem;
+		border: 1px solid rgb(109 157 124 / 0.24);
+		background: linear-gradient(180deg, rgb(236 248 240 / 0.98), rgb(218 236 224 / 0.88));
+		color: rgb(47 109 79 / 0.98);
+		font-weight: 700;
+		letter-spacing: 0.14em;
+		box-shadow: 0 0.22rem 0.62rem rgb(58 122 90 / 0.08);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="forest"]::before),
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="forest"]::after) {
+		content: "";
+		position: absolute;
+		top: 50%;
+		width: 0.36rem;
+		height: 0.52rem;
+		border-radius: 100% 0;
+		background: linear-gradient(180deg, rgb(92 160 118), rgb(58 122 90));
+		opacity: 0.78;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="forest"]::before) {
+		left: 0;
+		transform: translateY(-50%) rotate(-42deg);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="forest"]::after) {
+		right: 0;
+		transform: translateY(-50%) rotate(138deg);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="polaroid"]) {
+		border: 1px solid rgb(216 208 198 / 0.9);
+		border-radius: 0.18rem;
+		background: linear-gradient(180deg, rgb(252 250 246 / 0.99), rgb(247 242 235 / 0.94));
+		box-shadow:
+			0 0 0 0.18rem rgb(245 240 234 / 0.92),
+			0 0 0 0.22rem rgb(216 208 198 / 0.8),
+			0 0.18rem 0.48rem rgb(0 0 0 / 0.05);
+		color: rgb(74 74 74 / 0.96);
+		letter-spacing: 0.14em;
+		font-weight: 700;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="bronze"]) {
+		border: 1px solid rgb(159 127 46 / 0.22);
+		background:
+			linear-gradient(180deg, rgb(101 79 35 / 0.16), rgb(135 106 48 / 0.08)),
+			repeating-linear-gradient(
+				90deg,
+				rgb(214 201 186 / 0.75) 0,
+				rgb(214 201 186 / 0.75) 0.12rem,
+				rgb(200 189 176 / 0.72) 0.12rem,
+				rgb(200 189 176 / 0.72) 0.28rem,
+				rgb(214 201 186 / 0.75) 0.28rem,
+				rgb(214 201 186 / 0.75) 0.42rem
+			);
+		font-weight: 700;
+		letter-spacing: 0.16em;
+		box-shadow: inset 0 0.08rem 0.35rem rgb(0 0 0 / 0.05);
+		color: rgb(74 57 16 / 0.95);
+		text-shadow: 0 1px 0 rgb(255 243 196 / 0.45);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="bronze"]::before) {
+		content: "";
+		position: absolute;
+		inset: 0.08rem;
+		border-radius: inherit;
+		border: 1px solid rgb(255 255 255 / 0.16);
+		pointer-events: none;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="bronze"]::after) {
+		content: "✦";
+		position: static;
+		margin-left: 0.28rem;
+		color: rgb(184 134 11 / 0.42);
+		opacity: 0.48;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="timeline"]) {
+		border: 1px solid rgb(202 183 197 / 0.26);
+		background:
+			linear-gradient(180deg, rgb(248 243 247 / 0.98), rgb(235 240 245 / 0.86)),
+			radial-gradient(circle at 18% 18%, rgb(255 255 255 / 0.88), transparent 52%),
+			linear-gradient(
+				90deg,
+				rgb(249 220 220 / 0.24),
+				rgb(230 235 255 / 0.12) 48%,
+				rgb(220 245 232 / 0.24)
+			);
+		box-shadow: 0 0.22rem 0.62rem rgb(160 176 192 / 0.08);
+		padding-bottom: 0.36rem;
+		letter-spacing: 0.16em;
+		color: rgb(116 103 130 / 0.98);
+		text-shadow: 0 1px 0 rgb(255 255 255 / 0.45);
+		background-size: auto, auto, 180% 100%;
+		background-position: 0 0, 0 0, 0% 50%;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="timeline"]::after) {
+		content: "";
+		position: absolute;
+		left: 0.45rem;
+		right: 0.45rem;
+		bottom: 0.16rem;
+		height: 0.14rem;
+		border-radius: 999px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgb(212 160 160),
+			rgb(160 176 192),
+			transparent
+		);
+		opacity: 0.72;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label[data-poetic-variant="catalog"]) {
+		border: 1px solid rgb(214 205 192 / 0.8);
+		border-inline-width: 2px;
+		background: linear-gradient(180deg, rgb(250 248 243 / 0.99), rgb(238 233 224 / 0.92));
+		letter-spacing: 0.22em;
+		color: rgb(80 76 71 / 0.98);
+		font-weight: 500;
+		box-shadow: inset 0 0.08rem 0.28rem rgb(255 255 255 / 0.35);
+	}
+
+	:global(html[data-naming-style="poetic"] .btn-plain:hover .nav-label[data-poetic-variant="water"]),
+	:global(html[data-naming-style="poetic"] .dropdown-trigger[aria-expanded="true"] .nav-label[data-poetic-variant="water"]),
+	:global(html[data-naming-style="poetic"] .dropdown-item:hover .nav-label[data-poetic-variant="water"]),
+	:global(html[data-naming-style="poetic"] [data-mobile-dropdown-trigger][aria-expanded="true"] .nav-label[data-poetic-variant="water"]),
+	:global(html[data-naming-style="poetic"] .mobile-submenu a:hover .nav-label[data-poetic-variant="water"]) {
+		text-shadow: 0 0 0.85rem rgb(90 122 138 / 0.14);
+	}
+
+	:global(html[data-naming-style="poetic"] .btn-plain:hover .nav-label[data-poetic-variant="water"]::after),
+	:global(html[data-naming-style="poetic"] .dropdown-trigger[aria-expanded="true"] .nav-label[data-poetic-variant="water"]::after),
+	:global(html[data-naming-style="poetic"] .dropdown-item:hover .nav-label[data-poetic-variant="water"]::after),
+	:global(html[data-naming-style="poetic"] [data-mobile-dropdown-trigger][aria-expanded="true"] .nav-label[data-poetic-variant="water"]::after),
+	:global(html[data-naming-style="poetic"] .mobile-submenu a:hover .nav-label[data-poetic-variant="water"]::after) {
+		transform: scaleX(1.08);
+		box-shadow: 0 0.1rem 0.7rem rgb(138 179 201 / 0.28);
+	}
+
+	:global(html[data-naming-style="poetic"] .btn-plain:hover .nav-label[data-poetic-variant="mist"]),
+	:global(html[data-naming-style="poetic"] .dropdown-item:hover .nav-label[data-poetic-variant="mist"]),
+	:global(html[data-naming-style="poetic"] [data-mobile-dropdown-trigger][aria-expanded="true"] .nav-label[data-poetic-variant="mist"]),
+	:global(html[data-naming-style="poetic"] .mobile-submenu a:hover .nav-label[data-poetic-variant="mist"]) {
+		animation: none;
+		filter: blur(0);
+		color: rgb(70 90 100 / 0.95);
+		text-shadow: 0 0 2.3rem rgb(100 120 130 / 0.18);
+		transition-delay: 220ms, 260ms, 220ms, 240ms, 180ms, 220ms;
+	}
+
+	:global(html[data-naming-style="poetic"] .btn-plain:hover .nav-label[data-poetic-variant="timeline"]),
+	:global(html[data-naming-style="poetic"] .dropdown-trigger[aria-expanded="true"] .nav-label[data-poetic-variant="timeline"]),
+	:global(html[data-naming-style="poetic"] .dropdown-item:hover .nav-label[data-poetic-variant="timeline"]),
+	:global(html[data-naming-style="poetic"] [data-mobile-dropdown-trigger][aria-expanded="true"] .nav-label[data-poetic-variant="timeline"]),
+	:global(html[data-naming-style="poetic"] .mobile-submenu a:hover .nav-label[data-poetic-variant="timeline"]) {
+		background-position: 0 0, 0 0, 100% 50%;
+	}
+
+	:global(html[data-naming-style="poetic"] .btn-plain:hover .nav-label--top[data-poetic-variant="bronze"]::after),
+	:global(html[data-naming-style="poetic"] .dropdown-trigger[aria-expanded="true"] .nav-label--top[data-poetic-variant="bronze"]::after),
+	:global(html[data-naming-style="poetic"] [data-mobile-dropdown-trigger][aria-expanded="true"] .nav-label--top[data-poetic-variant="bronze"]::after) {
+		opacity: 0.78;
+		transform: scale(1.16) rotate(14deg);
+	}
+
+	:global(html.is-nav-transitioning .nav-label),
+	:global(html.is-changing .nav-label),
+	:global(html.is-animating .nav-label),
+	:global(html.is-leaving .nav-label),
+	:global(.is-theme-transitioning .nav-label) {
+		transition: none !important;
+		animation: none !important;
+		filter: none !important;
+		text-shadow: none !important;
+		box-shadow: none !important;
+	}
+
+	:global(html.is-nav-transitioning .nav-label::before),
+	:global(html.is-nav-transitioning .nav-label::after),
+	:global(html.is-changing .nav-label::before),
+	:global(html.is-changing .nav-label::after),
+	:global(html.is-animating .nav-label::before),
+	:global(html.is-animating .nav-label::after),
+	:global(html.is-leaving .nav-label::before),
+	:global(html.is-leaving .nav-label::after),
+	:global(.is-theme-transitioning .nav-label::before),
+	:global(.is-theme-transitioning .nav-label::after) {
+		animation: none !important;
+		transition: none !important;
+		box-shadow: none !important;
+		filter: none !important;
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label[data-poetic-variant="mountain"]) {
+		color: rgb(198 226 209 / 0.95);
+		background:
+			linear-gradient(180deg, rgb(38 54 43 / 0.96), rgb(27 42 34 / 0.9)),
+			radial-gradient(circle at 16% 18%, rgb(255 255 255 / 0.08), transparent 50%);
+		border-color: rgb(102 141 112 / 0.22);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label[data-poetic-variant="ink"]) {
+		background:
+			repeating-linear-gradient(
+				0deg,
+				transparent,
+				transparent 1.05rem,
+				rgb(255 255 255 / 0.04) 1.05rem,
+				rgb(255 255 255 / 0.04) 1.12rem
+			),
+			linear-gradient(180deg, rgb(44 39 39 / 0.96), rgb(31 27 27 / 0.92));
+		box-shadow:
+			inset 0 0 0 1px rgb(255 255 255 / 0.08),
+			0 0.15rem 0.4rem rgb(0 0 0 / 0.18);
+		color: rgb(245 243 239 / 0.96);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label[data-poetic-variant="mist"]) {
+		color: rgb(192 209 217 / 0.2);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label[data-poetic-variant="water"]) {
+		background:
+			linear-gradient(180deg, rgb(34 51 60 / 0.96), rgb(24 40 48 / 0.9)),
+			radial-gradient(circle at 18% 18%, rgb(255 255 255 / 0.08), transparent 52%);
+		border-color: rgb(129 171 189 / 0.22);
+		color: rgb(191 220 235 / 0.95);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label[data-poetic-variant="polaroid"]) {
+		background: linear-gradient(180deg, rgb(34 31 31 / 0.96), rgb(26 24 24 / 0.94));
+		border-color: rgb(255 255 255 / 0.12);
+		box-shadow:
+			0 0 0 0.18rem rgb(255 255 255 / 0.03),
+			0 0 0 0.22rem rgb(255 255 255 / 0.08);
+		color: rgb(241 236 232 / 0.94);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label[data-poetic-variant="catalog"]) {
+		background: linear-gradient(180deg, rgb(43 40 37 / 0.96), rgb(31 29 27 / 0.92));
+		border-color: rgb(255 255 255 / 0.14);
+		border-inline-color: rgb(255 255 255 / 0.18);
+		color: rgb(240 234 229 / 0.92);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label[data-poetic-variant="seal"]) {
+		background: linear-gradient(180deg, rgb(54 39 37 / 0.96), rgb(41 29 27 / 0.92));
+		border-color: rgb(197 157 151 / 0.22);
+		color: rgb(242 225 220 / 0.94);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label[data-poetic-variant="warm"]) {
+		background: linear-gradient(180deg, rgb(60 43 33 / 0.96), rgb(45 31 25 / 0.92));
+		border-color: rgb(214 168 139 / 0.2);
+		color: rgb(244 194 160 / 0.95);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label[data-poetic-variant="forest"]) {
+		background: linear-gradient(180deg, rgb(35 52 40 / 0.96), rgb(26 40 31 / 0.92));
+		border-color: rgb(109 157 124 / 0.22);
+		color: rgb(202 233 214 / 0.95);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label[data-poetic-variant="timeline"]) {
+		background-image:
+			linear-gradient(180deg, rgb(45 39 44 / 0.96), rgb(31 35 40 / 0.92)),
+			radial-gradient(circle at 18% 18%, rgb(255 255 255 / 0.08), transparent 52%),
+			linear-gradient(
+				90deg,
+				rgb(212 160 160),
+				rgb(212 192 160),
+				rgb(160 192 160),
+				rgb(160 176 192),
+				rgb(192 160 192)
+			);
+		border-color: rgb(202 183 197 / 0.2);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-link-trigger) {
+		gap: 0.16rem;
+		padding-inline: 0.42rem 0.52rem;
+		background: transparent !important;
+		box-shadow: none !important;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-link-trigger:hover),
+	:global(html[data-naming-style="poetic"] .nav-link-trigger:focus-visible),
+	:global(html[data-naming-style="poetic"] .nav-link-trigger[aria-expanded="true"]),
+	:global(html[data-naming-style="poetic"] .nav-link-trigger[data-nav-group="my"]:hover),
+	:global(html[data-naming-style="poetic"] .nav-link-trigger[data-nav-group="my"]:focus-visible),
+	:global(html[data-naming-style="poetic"] .nav-link-trigger[data-nav-group="my"][aria-expanded="true"]) {
+		background: transparent !important;
+		color: inherit !important;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-link-top-icon),
+	:global(html[data-naming-style="poetic"] .nav-link-top-arrow) {
+		color: rgb(15 23 42 / 0.42);
+		opacity: 0.76;
+		transition:
+			opacity 180ms ease,
+			transform 180ms ease,
+			color 180ms ease;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-link-top-icon) {
+		font-size: 0.92rem;
+		transform: translateY(0.02rem);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-link-top-arrow) {
+		margin-left: 0.22rem;
+		font-size: 1.02rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-link-trigger:hover .nav-link-top-icon),
+	:global(html[data-naming-style="poetic"] .nav-link-trigger:focus-visible .nav-link-top-icon),
+	:global(html[data-naming-style="poetic"] .nav-link-trigger[aria-expanded="true"] .nav-link-top-icon),
+	:global(html[data-naming-style="poetic"] .nav-link-trigger:hover .nav-link-top-arrow),
+	:global(html[data-naming-style="poetic"] .nav-link-trigger:focus-visible .nav-link-top-arrow),
+	:global(html[data-naming-style="poetic"] .nav-link-trigger[aria-expanded="true"] .nav-link-top-arrow) {
+		opacity: 1;
+		color: rgb(15 23 42 / 0.62);
+		transform: translateY(-0.02rem);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top) {
+		min-height: auto;
+		padding: 0.04rem 0.2rem 0.28rem;
+		border: none !important;
+		border-radius: 0 !important;
+		background: none !important;
+		box-shadow: none !important;
+		font-size: 1.06rem;
+		font-weight: 700;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="mountain"]) {
+		padding-left: 0.72rem;
+		color: rgb(36 76 49 / 0.98);
+		letter-spacing: 0.18em;
+		text-shadow: 0 1px 0 rgb(255 255 255 / 0.45);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="mountain"]::before) {
+		left: 0;
+		top: 12%;
+		bottom: 18%;
+		width: 0.28rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="water"]) {
+		padding-bottom: 0.34rem;
+		letter-spacing: 0.18em;
+		color: rgb(49 95 118 / 0.98);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="water"]::after) {
+		left: 0;
+		right: 0;
+		bottom: 0.02rem;
+		height: 0.14rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="seal"]) {
+		padding-left: 0.82rem;
+		color: rgb(77 51 47 / 0.98);
+		letter-spacing: 0.16em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="seal"]::before) {
+		left: 0;
+		width: 0.56rem;
+		height: 0.56rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="ink"]) {
+		padding-inline: 0.08rem;
+		font-size: 1.12rem;
+		letter-spacing: 0.16em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="ink"]::after) {
+		content: "";
+		position: absolute;
+		left: 0.02rem;
+		right: 0.02rem;
+		bottom: 0.02rem;
+		height: 0.16rem;
+		border-radius: 999px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgb(58 50 47 / 0.3) 20%,
+			rgb(58 50 47 / 0.62) 50%,
+			rgb(58 50 47 / 0.3) 80%,
+			transparent
+		);
+		filter: blur(0.02rem);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="mist"]) {
+		padding-bottom: 0.24rem;
+		border: none !important;
+		background: none !important;
+		box-shadow: none !important;
+		color: rgb(100 120 130 / 0.15);
+		opacity: 0.58;
+		letter-spacing: 0.28em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="mist"]::after) {
+		content: "";
+		position: absolute;
+		left: 8%;
+		right: 8%;
+		bottom: 0.04rem;
+		height: 0.24rem;
+		border-radius: 999px;
+		background: radial-gradient(
+			ellipse at center,
+			rgb(182 197 206 / 0.5) 0%,
+			transparent 70%
+		);
+		filter: blur(0.14rem);
+		opacity: 0.36;
+		transform: scaleX(0.74) scaleY(0.7);
+		transition:
+			opacity 1.9s cubic-bezier(0.22, 1, 0.36, 1),
+			transform 2.05s cubic-bezier(0.22, 1, 0.36, 1),
+			filter 1.96s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="warm"]) {
+		padding-bottom: 0.32rem;
+		letter-spacing: 0.18em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="warm"]::after) {
+		left: 8%;
+		right: 8%;
+		bottom: 0.02rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="forest"]) {
+		padding-inline: 0.82rem;
+		letter-spacing: 0.16em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="forest"]::before) {
+		left: 0.02rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="forest"]::after) {
+		right: 0.02rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="polaroid"]) {
+		padding: 0.08rem 0.5rem 0.28rem;
+		letter-spacing: 0.16em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="polaroid"]::before) {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 0.08rem;
+		width: 0.5rem;
+		height: 0.34rem;
+		border-top: 1px solid rgb(186 176 165 / 0.88);
+		border-left: 1px solid rgb(186 176 165 / 0.88);
+		border-radius: 0.08rem 0 0 0;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="polaroid"]::after) {
+		content: "";
+		position: absolute;
+		right: 0;
+		bottom: 0.04rem;
+		width: 0.5rem;
+		height: 0.34rem;
+		border-right: 1px solid rgb(186 176 165 / 0.88);
+		border-bottom: 1px solid rgb(186 176 165 / 0.88);
+		border-radius: 0 0 0.08rem 0;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="bronze"]) {
+		padding-inline: 0.14rem;
+		border: none !important;
+		background: linear-gradient(
+			180deg,
+			rgb(232 196 106) 0%,
+			rgb(184 134 11) 45%,
+			rgb(139 105 20) 100%
+		) !important;
+		-webkit-background-clip: text !important;
+		background-clip: text !important;
+		-webkit-text-fill-color: transparent;
+		color: transparent;
+		text-shadow: none;
+		box-shadow: none !important;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="bronze"]::before) {
+		content: "";
+		position: absolute;
+		left: -0.02rem;
+		right: -0.02rem;
+		bottom: 0.02rem;
+		height: 0.08rem;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgb(184 134 11 / 0.38),
+			transparent
+		);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="bronze"]::after) {
+		position: static;
+		margin-left: 0.26rem;
+		opacity: 0.52;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="timeline"]) {
+		padding-bottom: 0.34rem;
+		border: none !important;
+		background: linear-gradient(
+			90deg,
+			rgb(212 160 160),
+			rgb(212 192 160),
+			rgb(160 192 160),
+			rgb(160 176 192),
+			rgb(192 160 192)
+		) !important;
+		-webkit-background-clip: text !important;
+		background-clip: text !important;
+		-webkit-text-fill-color: transparent;
+		color: transparent;
+		box-shadow: none !important;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="timeline"]::after) {
+		left: 0;
+		right: 0;
+		bottom: 0.04rem;
+		height: 0.12rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="catalog"]) {
+		padding-inline: 0.34rem;
+		border-inline: 1px solid rgb(214 205 192 / 0.92) !important;
+		letter-spacing: 0.24em;
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-link-top-icon),
+	:global(html.dark[data-naming-style="poetic"] .nav-link-top-arrow) {
+		color: rgb(248 250 252 / 0.48);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-link-trigger:hover .nav-link-top-icon),
+	:global(html.dark[data-naming-style="poetic"] .nav-link-trigger:focus-visible .nav-link-top-icon),
+	:global(html.dark[data-naming-style="poetic"] .nav-link-trigger[aria-expanded="true"] .nav-link-top-icon),
+	:global(html.dark[data-naming-style="poetic"] .nav-link-trigger:hover .nav-link-top-arrow),
+	:global(html.dark[data-naming-style="poetic"] .nav-link-trigger:focus-visible .nav-link-top-arrow),
+	:global(html.dark[data-naming-style="poetic"] .nav-link-trigger[aria-expanded="true"] .nav-link-top-arrow) {
+		color: rgb(248 250 252 / 0.72);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--top) {
+		background: none !important;
+		box-shadow: none !important;
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="mountain"]) {
+		color: rgb(198 226 209 / 0.95);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="water"]) {
+		color: rgb(191 220 235 / 0.95);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="seal"]) {
+		color: rgb(242 225 220 / 0.94);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="ink"]) {
+		color: rgb(245 243 239 / 0.96);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="ink"]::after) {
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgb(255 255 255 / 0.18) 20%,
+			rgb(255 255 255 / 0.46) 50%,
+			rgb(255 255 255 / 0.18) 80%,
+			transparent
+		);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="mist"]) {
+		color: rgb(192 209 217 / 0.28);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="polaroid"]::before),
+	:global(html.dark[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="polaroid"]::after) {
+		border-color: rgb(255 255 255 / 0.46);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--top[data-poetic-variant="catalog"]) {
+		border-inline-color: rgb(255 255 255 / 0.24) !important;
+		color: rgb(240 234 229 / 0.92);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child) {
+		min-height: auto;
+		padding: 0.04rem 0.08rem 0.2rem;
+		border: none !important;
+		border-radius: 0 !important;
+		background: none !important;
+		box-shadow: none !important;
+		font-size: 0.98rem;
+		font-weight: 600;
+	}
+
+	:global(html[data-naming-style="poetic"] .dropdown-item:hover .nav-label--child),
+	:global(html[data-naming-style="poetic"] .mobile-submenu a:hover .nav-label--child),
+	:global(html[data-naming-style="poetic"] [data-mobile-dropdown-trigger][aria-expanded="true"] + [data-mobile-submenu] .nav-label--child) {
+		transform: translateX(2px) translateY(-1px);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="mountain"]) {
+		padding-left: 0.56rem;
+		letter-spacing: 0.14em;
+		text-shadow: 0 1px 0 rgb(255 255 255 / 0.42);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="mountain"]::before) {
+		left: 0;
+		top: 16%;
+		bottom: 18%;
+		width: 0.2rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="water"]) {
+		padding-bottom: 0.22rem;
+		letter-spacing: 0.14em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="water"]::after) {
+		left: 0;
+		right: 0;
+		bottom: 0.04rem;
+		height: 0.12rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="seal"]) {
+		padding-left: 0.62rem;
+		letter-spacing: 0.12em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="seal"]::before) {
+		left: 0;
+		width: 0.42rem;
+		height: 0.42rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="ink"]) {
+		padding-inline: 0.02rem;
+		font-size: 1rem;
+		font-family:
+			"萝莉体 第二版",
+			"KaiTi",
+			"STKaiti",
+			cursive;
+		letter-spacing: 0.14em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="ink"]::after) {
+		content: "";
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0.04rem;
+		height: 0.14rem;
+		border-radius: 999px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgb(58 50 47 / 0.22) 18%,
+			rgb(58 50 47 / 0.52) 50%,
+			rgb(58 50 47 / 0.22) 82%,
+			transparent
+		);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="mist"]) {
+		padding-bottom: 0.18rem;
+		color: rgb(100 120 130 / 0.16);
+		opacity: 0.62;
+		letter-spacing: 0.21em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="mist"]::after) {
+		content: "";
+		position: absolute;
+		left: 10%;
+		right: 10%;
+		bottom: 0.05rem;
+		height: 0.2rem;
+		border-radius: 999px;
+		background: radial-gradient(
+			ellipse at center,
+			rgb(182 197 206 / 0.42) 0%,
+			transparent 72%
+		);
+		filter: blur(0.12rem);
+		opacity: 0.3;
+		transform: scaleX(0.72) scaleY(0.72);
+		transition:
+			opacity 1.72s cubic-bezier(0.22, 1, 0.36, 1),
+			transform 1.84s cubic-bezier(0.22, 1, 0.36, 1),
+			filter 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	:global(html[data-naming-style="poetic"] .btn-plain:hover .nav-label--top[data-poetic-variant="mist"]),
+	:global(html[data-naming-style="poetic"] .btn-plain:focus-visible .nav-label--top[data-poetic-variant="mist"]),
+	:global(html[data-naming-style="poetic"] .dropdown-trigger[aria-expanded="true"] .nav-label--top[data-poetic-variant="mist"]) {
+		letter-spacing: 0.42em;
+		opacity: 0.98;
+		transform: translateY(-0.1rem) scale(1.06);
+	}
+
+	:global(html[data-naming-style="poetic"] .dropdown-item:hover .nav-label--child[data-poetic-variant="mist"]),
+	:global(html[data-naming-style="poetic"] .mobile-submenu a:hover .nav-label--child[data-poetic-variant="mist"]),
+	:global(html[data-naming-style="poetic"] [data-mobile-dropdown-trigger][aria-expanded="true"] + [data-mobile-submenu] .nav-label--child[data-poetic-variant="mist"]) {
+		letter-spacing: 0.31em;
+		opacity: 0.96;
+		transform: translateX(2px) translateY(-1px) scale(1.04);
+	}
+
+	:global(html[data-naming-style="poetic"] .btn-plain:hover .nav-label--top[data-poetic-variant="mist"]::after),
+	:global(html[data-naming-style="poetic"] .btn-plain:focus-visible .nav-label--top[data-poetic-variant="mist"]::after),
+	:global(html[data-naming-style="poetic"] .dropdown-trigger[aria-expanded="true"] .nav-label--top[data-poetic-variant="mist"]::after) {
+		opacity: 0.92;
+		transform: scaleX(1.26) scaleY(1.24);
+		transition-delay: 280ms, 320ms, 300ms;
+	}
+
+	:global(html[data-naming-style="poetic"] .dropdown-item:hover .nav-label--child[data-poetic-variant="mist"]::after),
+	:global(html[data-naming-style="poetic"] .mobile-submenu a:hover .nav-label--child[data-poetic-variant="mist"]::after),
+	:global(html[data-naming-style="poetic"] [data-mobile-dropdown-trigger][aria-expanded="true"] + [data-mobile-submenu] .nav-label--child[data-poetic-variant="mist"]::after) {
+		opacity: 0.84;
+		transform: scaleX(1.2) scaleY(1.18);
+		transition-delay: 260ms, 300ms, 280ms;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="warm"]) {
+		padding-bottom: 0.22rem;
+		letter-spacing: 0.14em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="warm"]::after) {
+		left: 10%;
+		right: 10%;
+		bottom: 0.04rem;
+		height: 0.22rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="forest"]) {
+		padding-inline: 0.62rem;
+		letter-spacing: 0.12em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="forest"]::before) {
+		left: 0.02rem;
+		width: 0.28rem;
+		height: 0.42rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="forest"]::after) {
+		right: 0.02rem;
+		width: 0.28rem;
+		height: 0.42rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="polaroid"]) {
+		padding: 0.04rem 0.38rem 0.2rem;
+		letter-spacing: 0.12em;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="polaroid"]::before) {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 0.08rem;
+		width: 0.34rem;
+		height: 0.22rem;
+		border-top: 1px solid rgb(186 176 165 / 0.82);
+		border-left: 1px solid rgb(186 176 165 / 0.82);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="polaroid"]::after) {
+		content: "";
+		position: absolute;
+		right: 0;
+		bottom: 0.04rem;
+		width: 0.34rem;
+		height: 0.22rem;
+		border-right: 1px solid rgb(186 176 165 / 0.82);
+		border-bottom: 1px solid rgb(186 176 165 / 0.82);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="bronze"]) {
+		padding-inline: 0.04rem;
+		background: linear-gradient(
+			180deg,
+			rgb(232 196 106) 0%,
+			rgb(184 134 11) 45%,
+			rgb(139 105 20) 100%
+		) !important;
+		-webkit-background-clip: text !important;
+		background-clip: text !important;
+		-webkit-text-fill-color: transparent;
+		color: transparent;
+		text-shadow: none;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="bronze"]::after) {
+		content: "";
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0.04rem;
+		height: 0.08rem;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgb(184 134 11 / 0.28),
+			transparent
+		);
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="timeline"]) {
+		padding-bottom: 0.22rem;
+		background: linear-gradient(
+			90deg,
+			rgb(212 160 160),
+			rgb(212 192 160),
+			rgb(160 192 160),
+			rgb(160 176 192),
+			rgb(192 160 192)
+		) !important;
+		-webkit-background-clip: text !important;
+		background-clip: text !important;
+		-webkit-text-fill-color: transparent;
+		color: transparent;
+		text-shadow: none;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="timeline"]::after) {
+		left: 0;
+		right: 0;
+		bottom: 0.04rem;
+		height: 0.1rem;
+	}
+
+	:global(html[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="catalog"]) {
+		padding-inline: 0.22rem;
+		border-inline: 1px solid rgb(214 205 192 / 0.84) !important;
+		letter-spacing: 0.18em;
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--child) {
+		background: none !important;
+		box-shadow: none !important;
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="ink"]::after) {
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgb(255 255 255 / 0.16) 18%,
+			rgb(255 255 255 / 0.42) 50%,
+			rgb(255 255 255 / 0.16) 82%,
+			transparent
+		);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="mist"]) {
+		color: rgb(192 209 217 / 0.28);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="polaroid"]::before),
+	:global(html.dark[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="polaroid"]::after) {
+		border-color: rgb(255 255 255 / 0.42);
+	}
+
+	:global(html.dark[data-naming-style="poetic"] .nav-label--child[data-poetic-variant="catalog"]) {
+		border-inline-color: rgb(255 255 255 / 0.22) !important;
+	}
+
+	@media (max-width: 1024px) {
+		:global(html[data-naming-style="poetic"] .nav-link-trigger) {
+			padding-inline: 0.28rem 0.36rem;
+		}
+
+		:global(html[data-naming-style="poetic"] .nav-label--top) {
+			font-size: 0.98rem;
+			padding-inline: 0.12rem;
+			letter-spacing: 0.1em !important;
+		}
+	}
+</style>
 
 {import.meta.env.PROD && <script is:inline define:vars={{scriptUrl: url('/pagefind/pagefind.js')}}>
 window.loadPagefind = async function() {

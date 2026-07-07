@@ -85,6 +85,8 @@ export class SwupHooksManager {
 	 */
 	private registerLinkClickHook(): void {
 		window.swup!.hooks.on("link:click", () => {
+			document.documentElement.classList.add("is-nav-transitioning");
+
 			// 移除首次页面加载的延迟
 			document.documentElement.style.setProperty(
 				"--content-delay",
@@ -149,6 +151,8 @@ export class SwupHooksManager {
 	 */
 	private registerPageViewHook(): void {
 		window.swup!.hooks.on("page:view", () => {
+			document.documentElement.classList.remove("is-nav-transitioning");
+
 			// 扩展页面高度
 			this.extendPageHeight(false);
 
@@ -178,6 +182,8 @@ export class SwupHooksManager {
 	 */
 	private registerVisitEndHook(): void {
 		window.swup!.hooks.on("visit:end", (_visit: VisitObject) => {
+			document.documentElement.classList.remove("is-nav-transitioning");
+
 			setTimeout(() => {
 				// 隐藏高度扩展元素
 				this.extendPageHeight(true);

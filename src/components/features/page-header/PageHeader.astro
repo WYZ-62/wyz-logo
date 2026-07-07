@@ -1,24 +1,688 @@
 ---
-import type { PageHeaderProps } from "./types";
+import type { PageHeaderProps, PageHeaderVariant } from "./types";
 
 const {
 	title,
 	subtitle,
 	class: className = "",
+	variant,
 } = Astro.props as PageHeaderProps;
+
+const normalizedTitle = title.trim();
+
+const autoVariantMap: Record<string, PageHeaderVariant> = {
+	关于本站: "seal",
+	友链: "water",
+	相册: "polaroid",
+	项目展示: "bronze",
+	技能展示: "bronze",
+	时间线: "timeline",
+	标签: "calligraphy",
+	专题: "calligraphy",
+	分类: "catalog",
+	日记: "mist",
+	归档: "water",
+};
+
+const resolvedVariant = variant ?? autoVariantMap[normalizedTitle] ?? "default";
+const segmentedTitleChars =
+	resolvedVariant === "catalog" ? Array.from(title) : [];
 ---
 
-<div class={`flex flex-col items-start justify-center mb-8 ${className}`}>
-	<h1
-		class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
-			before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
-			before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
-	>
-		{title}
-	</h1>
-	{
-		subtitle && (
-			<p class="text-lg text-black/60 dark:text-white/60">{subtitle}</p>
-		)
+<header
+	class={`page-header page-header--${resolvedVariant} ${className}`.trim()}
+	data-variant={resolvedVariant}
+>
+	<div class="page-header__title-shell">
+		{
+			resolvedVariant === "catalog" ? (
+				<h1 class="page-header__title page-header__title--catalog" aria-label={title}>
+					{segmentedTitleChars.map((char) => (
+						<span class="page-header__char">{char}</span>
+					))}
+				</h1>
+			) : (
+				<h1 class="page-header__title">
+					{
+						resolvedVariant === "seal" && (
+							<span class="page-header__seal" aria-hidden="true">拾忆</span>
+						)
+					}
+					<span class="page-header__title-text">{title}</span>
+				</h1>
+			)
+		}
+	</div>
+	{subtitle && <p class="page-header__subtitle">{subtitle}</p>}
+</header>
+
+<style>
+	.page-header {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.85rem;
+		margin-bottom: 2rem;
+		padding: 0.45rem 0 1.5rem;
 	}
-</div>
+
+	.page-header::after {
+		content: "";
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		width: min(14rem, 46%);
+		height: 1px;
+		background: linear-gradient(
+			90deg,
+			color-mix(in srgb, var(--primary) 30%, rgb(181 131 123)) 0%,
+			rgb(232 226 218 / 0.9) 48%,
+			transparent 100%
+		);
+	}
+
+	.page-header__title-shell {
+		position: relative;
+		max-width: 100%;
+	}
+
+	.page-header__title {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.7rem;
+		margin: 0;
+		max-width: 100%;
+		line-height: 1.22;
+		text-wrap: balance;
+		font-family:
+			"Noto Serif SC",
+			"Source Han Serif SC",
+			"Songti SC",
+			"STSong",
+			"SimSun",
+			serif;
+		font-size: clamp(2rem, 4vw, 3rem);
+		letter-spacing: 0.22em;
+		color: rgb(52 52 52 / 0.94);
+	}
+
+	.page-header__title-text {
+		position: relative;
+		display: inline-block;
+		max-width: 100%;
+		word-break: break-word;
+	}
+
+	.page-header__subtitle {
+		margin: 0;
+		max-width: 46rem;
+		line-height: 1.8;
+		text-wrap: pretty;
+		font-size: 0.95rem;
+		letter-spacing: 0.18em;
+		color: rgb(120 112 104 / 0.88);
+	}
+
+	.page-header--default .page-header__title {
+		padding-left: 2rem;
+		font-weight: 700;
+		color: rgb(45 90 58 / 0.96);
+		letter-spacing: 0.26em;
+	}
+
+	.page-header--default .page-header__title::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 8%;
+		bottom: 8%;
+		width: 0.5rem;
+		border-radius: 0.2rem;
+		background: linear-gradient(
+			180deg,
+			rgb(45 90 58) 0%,
+			color-mix(in srgb, rgb(45 90 58) 45%, white 55%) 82%,
+			transparent 100%
+		);
+		clip-path: polygon(0% 0%, 100% 30%, 100% 72%, 0% 100%);
+		box-shadow: 0 0 1rem rgb(45 90 58 / 0.12);
+	}
+
+	.page-header--default .page-header__subtitle {
+		padding-left: 2rem;
+	}
+
+	.page-header--seal .page-header__title {
+		padding-left: 3.6rem;
+		font-weight: 400;
+		color: rgb(45 74 62 / 0.96);
+		letter-spacing: 0.28em;
+	}
+
+	.page-header__seal {
+		position: absolute;
+		left: 0;
+		top: 50%;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.3rem 0.6rem;
+		border-radius: 0.18rem;
+		background: rgb(181 131 123 / 0.96);
+		color: rgb(252 250 246 / 0.98);
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.2em;
+		transform: translateY(-50%) rotate(-4deg);
+		box-shadow: 0.2rem 0.2rem 0.85rem rgb(181 131 123 / 0.22);
+	}
+
+	.page-header--seal .page-header__title-text::after {
+		content: "◈";
+		display: inline-block;
+		margin-left: 1rem;
+		font-size: 0.78rem;
+		color: rgb(181 131 123 / 0.34);
+		vertical-align: middle;
+	}
+
+	.page-header--water .page-header__title {
+		padding-bottom: 0.7rem;
+		font-weight: 400;
+		color: rgb(90 122 138 / 0.98);
+		letter-spacing: 0.34em;
+	}
+
+	.page-header--water .page-header__title::after {
+		content: "";
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 0.22rem;
+		border-radius: 999px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgb(138 179 201 / 0.78) 20%,
+			rgb(90 122 138 / 0.92) 50%,
+			rgb(138 179 201 / 0.78) 80%,
+			transparent
+		);
+		background-size: 300% 100%;
+		animation: page-header-water-flow 4s ease-in-out infinite;
+		opacity: 0.7;
+	}
+
+	.page-header--calligraphy .page-header__title-shell {
+		padding: 0.55rem 1.8rem 0.55rem 1.4rem;
+		border-radius: 0.35rem;
+		background:
+			repeating-linear-gradient(
+				0deg,
+				transparent,
+				transparent 1.7rem,
+				rgb(200 185 170 / 0.09) 1.7rem,
+				rgb(200 185 170 / 0.09) 1.82rem
+			),
+			repeating-linear-gradient(
+				90deg,
+				transparent,
+				transparent 1.7rem,
+				rgb(200 185 170 / 0.06) 1.7rem,
+				rgb(200 185 170 / 0.06) 1.82rem
+			),
+			radial-gradient(circle at 20% 80%, rgb(0 0 0 / 0.02) 0.13rem, transparent 0.14rem),
+			rgb(248 243 236 / 0.96);
+		box-shadow:
+			inset 0 0 0 1px rgb(236 228 218 / 0.95),
+			0 0.2rem 0.85rem rgb(0 0 0 / 0.04);
+	}
+
+	.page-header--calligraphy .page-header__title {
+		font-family:
+			"萝莉体 第二版",
+			"KaiTi",
+			"STKaiti",
+			"Ma Shan Zheng",
+			cursive;
+		font-size: clamp(2.2rem, 4.2vw, 3.2rem);
+		font-weight: 400;
+		letter-spacing: 0.15em;
+		background: linear-gradient(135deg, rgb(26 26 26) 60%, rgb(122 122 122) 100%);
+		-webkit-background-clip: text;
+		background-clip: text;
+		-webkit-text-fill-color: transparent;
+		filter: drop-shadow(0 0.12rem 0.2rem rgb(0 0 0 / 0.08));
+	}
+
+	.page-header--mist .page-header__title {
+		font-weight: 300;
+		color: rgb(100 120 130 / 0.32);
+		letter-spacing: 0.42em;
+		filter: blur(0.16rem);
+		text-shadow: 0 0 3rem rgb(100 120 130 / 0.06);
+		animation: page-header-cloud-breathe 6s ease-in-out infinite alternate;
+		transition:
+			color 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+			filter 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+			letter-spacing 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	.page-header--mist:hover .page-header__title {
+		color: rgb(70 90 100 / 0.95);
+		filter: blur(0);
+		letter-spacing: 0.46em;
+		animation: none;
+	}
+
+	.page-header--polaroid .page-header__title-shell {
+		display: inline-block;
+		padding: 0.6rem 2rem 0.82rem;
+		border: 1px solid rgb(216 208 198 / 0.92);
+		border-radius: 0.18rem;
+		background: rgb(252 250 246 / 0.98);
+		box-shadow:
+			0 0 0 0.26rem rgb(245 240 234 / 0.94),
+			0 0 0 0.32rem rgb(216 208 198 / 0.86),
+			0 0.35rem 1.25rem rgb(0 0 0 / 0.05);
+		transition:
+			transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+			box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+
+	.page-header--polaroid .page-header__title-shell::before {
+		content: "";
+		position: absolute;
+		inset: 0.38rem;
+		border: 1px solid rgb(0 0 0 / 0.03);
+		border-radius: 0.1rem;
+		pointer-events: none;
+	}
+
+	.page-header--polaroid:hover .page-header__title-shell {
+		transform: translateY(-0.24rem) scale(1.015);
+		box-shadow:
+			0 0 0 0.26rem rgb(245 240 234 / 0.94),
+			0 0 0 0.32rem rgb(216 208 198 / 0.86),
+			0 1rem 2.2rem rgb(0 0 0 / 0.08);
+	}
+
+	.page-header--polaroid .page-header__title {
+		font-weight: 400;
+		color: rgb(74 74 74 / 0.96);
+		letter-spacing: 0.28em;
+		font-size: clamp(1.8rem, 3.6vw, 2.5rem);
+	}
+
+	.page-header--bronze .page-header__title-shell {
+		display: inline-block;
+		padding: 0.2rem 0.2rem 0.2rem 0;
+		border-radius: 0.35rem;
+		background: repeating-linear-gradient(
+			90deg,
+			rgb(212 201 190) 0,
+			rgb(212 201 190) 0.12rem,
+			rgb(200 189 176) 0.12rem,
+			rgb(200 189 176) 0.31rem,
+			rgb(212 201 190) 0.31rem,
+			rgb(212 201 190) 0.45rem
+		);
+		box-shadow: inset 0 0.08rem 0.4rem rgb(0 0 0 / 0.06);
+	}
+
+	.page-header--bronze .page-header__title {
+		padding: 0.2rem 1.2rem 0.2rem 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.34em;
+		font-size: clamp(2rem, 3.9vw, 2.75rem);
+	}
+
+	.page-header--bronze .page-header__title-text {
+		background: linear-gradient(180deg, rgb(232 196 106) 0%, rgb(184 134 11) 45%, rgb(139 105 20) 100%);
+		-webkit-background-clip: text;
+		background-clip: text;
+		-webkit-text-fill-color: transparent;
+		filter: drop-shadow(0 0.15rem 0.45rem rgb(184 134 11 / 0.2));
+	}
+
+	.page-header--bronze .page-header__title-text::after {
+		content: "✦";
+		display: inline-block;
+		margin-left: 0.6rem;
+		color: rgb(184 134 11 / 0.36);
+		-webkit-text-fill-color: initial;
+		animation: page-header-sparkle 2.5s ease-in-out infinite alternate;
+	}
+
+	.page-header--timeline .page-header__title {
+		padding: 0 0.35rem 0.72rem;
+		font-weight: 400;
+		letter-spacing: 0.38em;
+		background: linear-gradient(
+			90deg,
+			rgb(212 160 160),
+			rgb(212 192 160),
+			rgb(160 192 160),
+			rgb(160 176 192),
+			rgb(192 160 192)
+		);
+		background-size: 300% 100%;
+		-webkit-background-clip: text;
+		background-clip: text;
+		-webkit-text-fill-color: transparent;
+		animation: page-header-flow-gradient 6s ease-in-out infinite alternate;
+	}
+
+	.page-header--timeline .page-header__title::after {
+		content: "";
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 0.14rem;
+		border-radius: 999px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgb(212 160 160),
+			rgb(160 176 192),
+			transparent
+		);
+		background-size: 300% 100%;
+		animation: page-header-flow-gradient 6s ease-in-out infinite alternate;
+		opacity: 0.6;
+	}
+
+	.page-header--timeline .page-header__title::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgb(255 255 240 / 0.22),
+			transparent
+		);
+		background-size: 200% 100%;
+		mix-blend-mode: overlay;
+		pointer-events: none;
+		animation: page-header-scan-line 4s ease-in-out infinite;
+	}
+
+	.page-header__title--catalog {
+		display: flex;
+		align-items: center;
+		gap: 0.12rem;
+		letter-spacing: 0;
+		font-size: clamp(1.75rem, 3.5vw, 2.45rem);
+		font-weight: 300;
+		color: rgb(74 74 74 / 0.96);
+	}
+
+	.page-header__char {
+		display: inline-block;
+		padding: 0 0.48rem;
+		border-right: 1px solid rgb(212 201 190 / 0.96);
+		color: rgb(90 90 90 / 0.94);
+		transition:
+			color 0.25s ease,
+			transform 0.25s ease,
+			border-color 0.25s ease;
+	}
+
+	.page-header__char:first-child {
+		padding-left: 0;
+	}
+
+	.page-header__char:last-child {
+		padding-right: 0;
+		border-right: none;
+	}
+
+	.page-header__char:hover {
+		color: rgb(45 74 62 / 0.96);
+		transform: translateY(-0.12rem) scale(1.02);
+		border-right-color: rgb(181 131 123 / 0.9);
+	}
+
+	@keyframes page-header-water-flow {
+		0% {
+			background-position: -300% 0;
+		}
+		100% {
+			background-position: 300% 0;
+		}
+	}
+
+	@keyframes page-header-cloud-breathe {
+		0% {
+			opacity: 0.72;
+			filter: blur(0.18rem);
+		}
+		100% {
+			opacity: 1;
+			filter: blur(0.08rem);
+		}
+	}
+
+	@keyframes page-header-sparkle {
+		0% {
+			opacity: 0.16;
+			transform: scale(0.82) rotate(0deg);
+		}
+		100% {
+			opacity: 0.62;
+			transform: scale(1.18) rotate(20deg);
+		}
+	}
+
+	@keyframes page-header-flow-gradient {
+		0% {
+			background-position: 0% 50%;
+		}
+		100% {
+			background-position: 100% 50%;
+		}
+	}
+
+	@keyframes page-header-scan-line {
+		0% {
+			background-position: -200% 0;
+		}
+		100% {
+			background-position: 200% 0;
+		}
+	}
+
+	:global(.dark) .page-header::after {
+		background: linear-gradient(
+			90deg,
+			color-mix(in srgb, var(--primary) 38%, rgb(244 196 187)) 0%,
+			rgb(255 255 255 / 0.14) 48%,
+			transparent 100%
+		);
+	}
+
+	:global(.dark) .page-header__subtitle {
+		color: rgb(226 218 212 / 0.68);
+	}
+
+	:global(.dark) .page-header--default .page-header__title {
+		color: rgb(198 226 209 / 0.95);
+	}
+
+	:global(.dark) .page-header--seal .page-header__title {
+		color: rgb(225 236 230 / 0.94);
+	}
+
+	:global(.dark) .page-header__seal {
+		box-shadow: 0 0.2rem 1rem rgb(181 131 123 / 0.28);
+	}
+
+	:global(.dark) .page-header--water .page-header__title {
+		color: rgb(191 220 235 / 0.94);
+	}
+
+	:global(.dark) .page-header--calligraphy .page-header__title-shell {
+		background:
+			repeating-linear-gradient(
+				0deg,
+				transparent,
+				transparent 1.7rem,
+				rgb(255 255 255 / 0.04) 1.7rem,
+				rgb(255 255 255 / 0.04) 1.82rem
+			),
+			repeating-linear-gradient(
+				90deg,
+				transparent,
+				transparent 1.7rem,
+				rgb(255 255 255 / 0.03) 1.7rem,
+				rgb(255 255 255 / 0.03) 1.82rem
+			),
+			radial-gradient(circle at 20% 80%, rgb(255 255 255 / 0.03) 0.13rem, transparent 0.14rem),
+			rgb(38 34 34 / 0.9);
+		box-shadow:
+			inset 0 0 0 1px rgb(255 255 255 / 0.08),
+			0 0.2rem 1rem rgb(0 0 0 / 0.25);
+	}
+
+	:global(.dark) .page-header--calligraphy .page-header__title {
+		background: linear-gradient(135deg, rgb(245 243 239) 45%, rgb(170 170 170) 100%);
+		-webkit-background-clip: text;
+		background-clip: text;
+	}
+
+	:global(.dark) .page-header--mist .page-header__title {
+		color: rgb(192 209 217 / 0.36);
+	}
+
+	:global(.dark) .page-header--mist:hover .page-header__title {
+		color: rgb(235 244 249 / 0.92);
+	}
+
+	:global(.dark) .page-header--polaroid .page-header__title-shell {
+		background: rgb(34 31 31 / 0.94);
+		border-color: rgb(255 255 255 / 0.12);
+		box-shadow:
+			0 0 0 0.26rem rgb(255 255 255 / 0.03),
+			0 0 0 0.32rem rgb(255 255 255 / 0.08),
+			0 0.5rem 1.4rem rgb(0 0 0 / 0.22);
+	}
+
+	:global(.dark) .page-header--polaroid .page-header__title {
+		color: rgb(241 236 232 / 0.94);
+	}
+
+	:global(.dark) .page-header--bronze .page-header__title-shell {
+		box-shadow: inset 0 0.08rem 0.4rem rgb(0 0 0 / 0.18);
+	}
+
+	:global(.dark) .page-header__title--catalog {
+		color: rgb(240 234 229 / 0.92);
+	}
+
+	:global(.dark) .page-header__char {
+		color: rgb(224 216 210 / 0.92);
+		border-right-color: rgb(255 255 255 / 0.14);
+	}
+
+	:global(.dark) .page-header__char:hover {
+		color: rgb(230 240 234 / 0.96);
+		border-right-color: rgb(244 196 187 / 0.58);
+	}
+
+	@media (max-width: 768px) {
+		.page-header {
+			margin-bottom: 1.65rem;
+			padding-bottom: 1.25rem;
+			gap: 0.75rem;
+		}
+
+		.page-header__title {
+			font-size: clamp(1.6rem, 7vw, 2.2rem);
+			letter-spacing: 0.16em;
+		}
+
+		.page-header__subtitle {
+			font-size: 0.88rem;
+			letter-spacing: 0.13em;
+		}
+
+		.page-header--default .page-header__title {
+			padding-left: 1.55rem;
+		}
+
+		.page-header--default .page-header__subtitle {
+			padding-left: 1.55rem;
+		}
+
+		.page-header--seal .page-header__title {
+			padding-left: 2.95rem;
+		}
+
+		.page-header__seal {
+			padding: 0.22rem 0.45rem;
+			font-size: 0.62rem;
+		}
+
+		.page-header--calligraphy .page-header__title-shell,
+		.page-header--polaroid .page-header__title-shell {
+			padding-inline: 1rem;
+		}
+
+		.page-header--polaroid .page-header__title-shell {
+			padding-block: 0.45rem 0.68rem;
+		}
+
+		.page-header--bronze .page-header__title {
+			padding-right: 0.7rem;
+		}
+
+		.page-header__title--catalog {
+			gap: 0.02rem;
+		}
+
+		.page-header__char {
+			padding: 0 0.25rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.page-header__title {
+			font-size: clamp(1.4rem, 8vw, 1.9rem);
+		}
+
+		.page-header__subtitle {
+			font-size: 0.82rem;
+			letter-spacing: 0.1em;
+		}
+
+		.page-header--default .page-header__title,
+		.page-header--default .page-header__subtitle {
+			padding-left: 1.3rem;
+		}
+
+		.page-header--seal .page-header__title {
+			padding-left: 2.45rem;
+		}
+
+		.page-header--mist .page-header__title {
+			letter-spacing: 0.28em;
+		}
+
+		.page-header--water .page-header__title,
+		.page-header--timeline .page-header__title,
+		.page-header--bronze .page-header__title,
+		.page-header--polaroid .page-header__title {
+			letter-spacing: 0.18em;
+		}
+
+		.page-header__title--catalog {
+			font-size: clamp(1.28rem, 8vw, 1.7rem);
+		}
+	}
+</style>

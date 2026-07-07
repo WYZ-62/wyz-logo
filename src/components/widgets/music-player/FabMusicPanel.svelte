@@ -45,6 +45,10 @@
 		musicPlayerStore.next();
 	}
 
+	function cycleVariant() {
+		musicPlayerStore.cycleVariant();
+	}
+
 	function toggleMode() {
 		musicPlayerStore.toggleMode();
 	}
@@ -87,6 +91,7 @@
 			isMuted={state.isMuted}
 			onToggleMute={toggleMute}
 			onSetVolume={setVolume}
+			onSwitchVariant={cycleVariant}
 		/>
 	</div>
 

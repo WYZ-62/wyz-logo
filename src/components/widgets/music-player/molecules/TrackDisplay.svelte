@@ -4,6 +4,7 @@
 	import Key from "../../../../i18n/i18nKey";
 	import { i18n } from "../../../../i18n/translation";
 	import CoverImage from "../atoms/CoverImage.svelte";
+	import SongVariantButton from "../atoms/SongVariantButton.svelte";
 	import TrackInfo from "../atoms/TrackInfo.svelte";
 	import type { Song } from "../types";
 
@@ -21,6 +22,7 @@
 		onHideClick?: () => void;
 		onExpandClick?: () => void;
 		onPlaylistClick?: () => void;
+		onVariantClick?: () => void;
 	}
 
 	const {
@@ -37,6 +39,7 @@
 		onHideClick,
 		onExpandClick,
 		onPlaylistClick,
+		onVariantClick,
 	}: Props = $props();
 </script>
 
@@ -69,6 +72,7 @@
 		>
 			<TrackInfo {song} {currentTime} {duration} size="mini" />
 		</div>
+		<SongVariantButton song={song} size="mini" onSwitch={onVariantClick} />
 		<div class="flex items-center gap-1">
 			<button
 				class="btn-plain w-8 h-8 rounded-lg flex items-center justify-center"
@@ -97,7 +101,20 @@
 			{isLoading}
 			size="expanded"
 		/>
-		<TrackInfo {song} {currentTime} {duration} showTime size="expanded" />
+		<div class="flex items-start gap-2 flex-1 min-w-0">
+			<TrackInfo
+				{song}
+				{currentTime}
+				{duration}
+				showTime
+				size="expanded"
+			/>
+			<SongVariantButton
+				song={song}
+				size="expanded"
+				onSwitch={onVariantClick}
+			/>
+		</div>
 		{#if showControls}
 			<div class="flex items-center gap-1">
 				<button

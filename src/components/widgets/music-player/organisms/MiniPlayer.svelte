@@ -13,6 +13,7 @@
 		onInfoClick: () => void;
 		onHideClick: () => void;
 		onExpandClick: () => void;
+		onVariantClick: () => void;
 	}
 
 	const {
@@ -26,6 +27,7 @@
 		onInfoClick,
 		onHideClick,
 		onExpandClick,
+		onVariantClick,
 	}: Props = $props();
 </script>
 
@@ -46,6 +48,7 @@
 		{onInfoClick}
 		{onHideClick}
 		{onExpandClick}
+		{onVariantClick}
 	/>
 </div>
 

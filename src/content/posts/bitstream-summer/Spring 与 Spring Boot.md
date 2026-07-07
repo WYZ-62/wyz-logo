@@ -12,9 +12,6 @@ alias: spring-and-spring-boot-notes
 
 # Spring 与 Spring Boot 核心笔记
 
-这篇文章根据 `Spring-图片原稿.md` 中的课堂截图整理而成，按 Spring 学习的主线归纳成一篇完整笔记：`IoC / DI -> 配置注入 -> Bean 生命周期 -> Spring Boot 创建项目 -> AOP -> 事务 -> Spring MVC -> 常见坑`。
-放在「比特流夏日」专题里，它承担的是从 Java 与数据库基础继续走向企业级后端框架的衔接部分，也更适合作为后端方向的专题补充笔记。
-
 ## 1. Spring 是什么
 
 Spring 是一个开源的 Java 企业级应用开发框架，核心目标是简化 Java 开发，让项目更容易解耦、测试和维护。

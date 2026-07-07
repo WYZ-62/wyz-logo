@@ -35,6 +35,10 @@
 		musicPlayerStore.next();
 	}
 
+	function cycleVariant() {
+		musicPlayerStore.cycleVariant();
+	}
+
 	function toggleShuffle() {
 		musicPlayerStore.toggleShuffle();
 	}
@@ -271,6 +275,7 @@
 				onInfoClick={toggleExpanded}
 				onHideClick={toggleHidden}
 				onExpandClick={toggleExpanded}
+				onVariantClick={cycleVariant}
 			/>
 
 			<PlayerBar
@@ -301,6 +306,7 @@
 				onHideClick={toggleHidden}
 				onPlaylistClick={togglePlaylist}
 				onCollapseClick={toggleExpanded}
+				onVariantClick={cycleVariant}
 			/>
 
 			<Playlist

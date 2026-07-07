@@ -12,6 +12,26 @@ export const LOCAL_PLAYLIST: Song[] = [
 		cover: "assets/music/cover/call-of-silence.png",
 		url: "assets/music/url/CallofSilence.mp3",
 		duration: 178,
+		variantIndex: 0,
+		variants: [
+			{
+				label: "原版",
+				url: "assets/music/url/CallofSilence.mp3",
+				duration: 178,
+			},
+			{
+				label: "救赎",
+				url: "assets/music/url/CallofSilence (救赎).mp3",
+			},
+			{
+				label: "宿命",
+				url: "assets/music/url/CallofSilence(宿命).mp3",
+			},
+			{
+				label: "自由",
+				url: "assets/music/url/CallofSilence(自由).mp3",
+			},
+		],
 	},
 	{
 		id: 2,

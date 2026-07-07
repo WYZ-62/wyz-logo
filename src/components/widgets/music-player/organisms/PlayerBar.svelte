@@ -39,6 +39,7 @@
 		onHideClick: () => void;
 		onPlaylistClick: () => void;
 		onCollapseClick: () => void;
+		onVariantClick: () => void;
 	}
 
 	const {
@@ -69,6 +70,7 @@
 		onHideClick,
 		onPlaylistClick,
 		onCollapseClick,
+		onVariantClick,
 	}: Props = $props();
 </script>
 
@@ -89,6 +91,7 @@
 		{showPlaylist}
 		{onHideClick}
 		{onPlaylistClick}
+		{onVariantClick}
 	/>
 	<ProgressControl
 		{currentTime}

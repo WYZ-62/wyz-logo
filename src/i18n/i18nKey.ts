@@ -117,6 +117,7 @@ enum I18nKey {
 	musicPlayerProgress = "musicPlayerProgress",
 	musicPlayerCover = "musicPlayerCover",
 	musicPlayerPlaylist = "musicPlayerPlaylist",
+	musicPlayerSwitchVariant = "musicPlayerSwitchVariant",
 	musicPlayerLoading = "musicPlayerLoading",
 	musicPlayerErrorPlaylist = "musicPlayerErrorPlaylist",
 	musicPlayerErrorSong = "musicPlayerErrorSong",

@@ -124,6 +124,7 @@ export const zh_CN: Translation = {
 	[Key.musicPlayerProgress]: "播放进度",
 	[Key.musicPlayerCover]: "封面",
 	[Key.musicPlayerPlaylist]: "播放列表",
+	[Key.musicPlayerSwitchVariant]: "切换版本",
 	[Key.musicPlayerLoading]: "加载中...",
 	[Key.musicPlayerErrorPlaylist]: "播放列表获取失败",
 	[Key.musicPlayerErrorSong]: "当前歌曲加载失败，尝试加载下一首",

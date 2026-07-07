@@ -4,9 +4,13 @@ import { Icon } from "astro-icon/components";
 import { LinkPresets } from "../../../constants/link-presets";
 import I18nKey from "../../../i18n/i18nKey";
 import { i18n } from "../../../i18n/translation";
+import {
+	getPoeticName,
+	getPoeticVariant,
+} from "../../../utils/naming-style";
 import type { LinkPreset, NavBarLink } from "../../../types/config";
 import { url } from "../../../utils/url-utils";
-import type { NavMenuPanelProps, ProcessedNavBarLink } from "./types";
+import type { NavMenuPanelProps } from "./types";
 
 const navTitleMap: Record<string, string> = {
 	Links: I18nKey.navLinks,
@@ -32,19 +36,29 @@ const getLocalizedName = (name: string): string => {
 	return name;
 };
 
-const processedLinks: ProcessedNavBarLink[] = (
-	Astro.props as NavMenuPanelProps
-).links.map(
-	(link: NavBarLink): ProcessedNavBarLink => ({
+const getNameVariant = (name: string) => {
+	const defaultName = getLocalizedName(name);
+
+	return {
+		defaultName,
+		poeticName: getPoeticName(defaultName),
+		poeticVariant: getPoeticVariant(defaultName),
+	};
+};
+
+const processedLinks = (Astro.props as NavMenuPanelProps).links.map(
+	(link: NavBarLink) => ({
 		...link,
-		children: link.children?.map(
-			(child: NavBarLink | LinkPreset): ProcessedNavBarLink => {
-				if (typeof child === "number") {
-					return LinkPresets[child] as ProcessedNavBarLink;
-				}
-				return child as ProcessedNavBarLink;
-			},
-		),
+		nameVariant: getNameVariant(link.name),
+		children: link.children?.map((child: NavBarLink | LinkPreset) => {
+			const resolvedChild =
+				typeof child === "number" ? LinkPresets[child] : child;
+
+			return {
+				...resolvedChild,
+				nameVariant: getNameVariant(resolvedChild.name),
+			};
+		}),
 	}),
 );
 ---
@@ -78,7 +92,21 @@ const processedLinks: ProcessedNavBarLink[] = (
 										class="text-[1.1rem] mr-2"
 									/>
 								)}
-								{getLocalizedName(link.name)}
+								<span
+									class="nav-label nav-label--top"
+									data-naming-label
+									data-default-label={
+										link.nameVariant.defaultName
+									}
+									data-poetic-label={
+										link.nameVariant.poeticName
+									}
+									data-poetic-variant={
+										link.nameVariant.poeticVariant
+									}
+								>
+									{link.nameVariant.defaultName}
+								</span>
 							</div>
 							<Icon
 								name="material-symbols:keyboard-arrow-down-rounded"
@@ -104,7 +132,21 @@ const processedLinks: ProcessedNavBarLink[] = (
 												class="text-[1.1rem] mr-2"
 											/>
 										)}
-										{getLocalizedName(child.name)}
+										<span
+											class="nav-label nav-label--child"
+											data-naming-label
+											data-default-label={
+												child.nameVariant.defaultName
+											}
+											data-poetic-label={
+												child.nameVariant.poeticName
+											}
+											data-poetic-variant={
+												child.nameVariant.poeticVariant
+											}
+										>
+											{child.nameVariant.defaultName}
+										</span>
 									</div>
 									{child.external && (
 										<Icon
@@ -131,7 +173,19 @@ const processedLinks: ProcessedNavBarLink[] = (
 									class="text-[1.1rem] mr-2"
 								/>
 							)}
-							{getLocalizedName(link.name)}
+							<span
+								class="nav-label nav-label--top"
+								data-naming-label
+								data-default-label={
+									link.nameVariant.defaultName
+								}
+								data-poetic-label={link.nameVariant.poeticName}
+								data-poetic-variant={
+									link.nameVariant.poeticVariant
+								}
+							>
+								{link.nameVariant.defaultName}
+							</span>
 						</div>
 						{!link.external && (
 							<Icon

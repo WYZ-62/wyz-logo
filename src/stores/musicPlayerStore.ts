@@ -78,11 +78,46 @@ class MusicPlayerStore {
 		};
 	}
 
+	private cloneSong(song: Song): Song {
+		return {
+			...song,
+			variants: song.variants?.map((variant) => ({ ...variant })),
+		};
+	}
+
+	private buildSongFromVariant(song: Song, variantIndex: number): Song {
+		const variants = song.variants;
+		if (!variants || variants.length === 0) {
+			return this.cloneSong(song);
+		}
+
+		const safeIndex =
+			((variantIndex % variants.length) + variants.length) %
+			variants.length;
+		const variant = variants[safeIndex];
+
+		return {
+			...this.cloneSong(song),
+			title: variant.title ?? song.title,
+			artist: variant.artist ?? song.artist,
+			url: variant.url,
+			duration: variant.duration ?? song.duration,
+			variantIndex: safeIndex,
+		};
+	}
+
+	private updatePlaylistSong(index: number, song: Song): void {
+		if (index < 0 || index >= this.state.playlist.length) {
+			return;
+		}
+		this.state.playlist[index] = this.cloneSong(song);
+	}
+
 	private createSnapshot(): MusicPlayerState {
 		return {
 			...this.state,
-			currentSong: { ...this.state.currentSong },
-			playlist: this.state.playlist.map((song) => ({ ...song })),
+			currentSong: this.cloneSong(this.state.currentSong),
+			playlist: this.state.playlist.map((song) => this.cloneSong(song)),
 		};
 	}
 
@@ -189,10 +224,12 @@ class MusicPlayerStore {
 		this.state.isLoading = false;
 		if (this.audio?.duration && this.audio.duration > 1) {
 			this.state.duration = Math.floor(this.audio.duration);
-			this.state.currentSong = {
+			const updatedSong = {
 				...this.state.currentSong,
 				duration: this.state.duration,
 			};
+			this.state.currentSong = this.cloneSong(updatedSong);
+			this.updatePlaylistSong(this.state.currentIndex, updatedSong);
 		}
 
 		if (this.state.willAutoPlay || this.state.isPlaying) {
@@ -335,7 +372,7 @@ class MusicPlayerStore {
 	}
 
 	private loadLocalPlaylist(): void {
-		this.state.playlist = [...LOCAL_PLAYLIST];
+		this.state.playlist = LOCAL_PLAYLIST.map((song) => this.cloneSong(song));
 		if (this.state.playlist.length === 0) {
 			this.showError("本地播放列表为空");
 		} else {
@@ -348,7 +385,11 @@ class MusicPlayerStore {
 			return;
 		}
 		if (song.url !== this.state.currentSong.url) {
-			this.state.currentSong = { ...song };
+			const nextSong = this.cloneSong(song);
+			this.state.currentSong = nextSong;
+			this.state.currentTime = 0;
+			this.state.duration = nextSong.duration;
+			this.updatePlaylistSong(this.state.currentIndex, nextSong);
 			if (song.url) {
 				this.state.isLoading = true;
 			} else {
@@ -450,6 +491,23 @@ class MusicPlayerStore {
 		}
 		this.state.currentIndex = index;
 		this.loadSong(this.state.playlist[index], true);
+	}
+
+	cycleVariant(): void {
+		const song =
+			this.state.playlist[this.state.currentIndex] ?? this.state.currentSong;
+		const variants = song.variants;
+		if (!variants || variants.length <= 1) {
+			return;
+		}
+
+		const currentVariantIndex =
+			song.variantIndex ?? this.state.currentSong.variantIndex ?? 0;
+		const nextVariantIndex = (currentVariantIndex + 1) % variants.length;
+		const nextSong = this.buildSongFromVariant(song, nextVariantIndex);
+		const shouldAutoPlay = this.state.isPlaying || this.state.willAutoPlay;
+
+		this.loadSong(nextSong, shouldAutoPlay);
 	}
 
 	seek(time: number): void {

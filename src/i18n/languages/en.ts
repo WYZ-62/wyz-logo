@@ -128,6 +128,7 @@ export const en: Translation = {
 	[Key.musicPlayerProgress]: "Playback Progress",
 	[Key.musicPlayerCover]: "Cover",
 	[Key.musicPlayerPlaylist]: "Playlist",
+	[Key.musicPlayerSwitchVariant]: "Switch version",
 	[Key.musicPlayerLoading]: "Loading...",
 	[Key.musicPlayerErrorPlaylist]: "Failed to fetch playlist",
 	[Key.musicPlayerErrorSong]: "Failed to load current song, trying next",
