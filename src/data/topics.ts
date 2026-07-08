@@ -16,6 +16,7 @@ export interface TopicDefinition {
 	description: string;
 	cover: string;
 	visibility?: TopicVisibilityMode;
+	postOrder?: string[];
 	postMatchers: Array<{
 		tags?: string[];
 		categories?: string[];
@@ -39,18 +40,75 @@ function getQuizSequence(slug: string): number | null {
 	return Number.parseInt(match[1], 10);
 }
 
+function createPostOrderLookup(postOrder: string[]): Map<string, number> {
+	const lookup = new Map<string, number>();
+
+	postOrder.forEach((slug, index) => {
+		const normalizedSlug = normalizeSlug(slug);
+		const basename = normalizedSlug.split("/").pop() ?? normalizedSlug;
+
+		if (!lookup.has(normalizedSlug)) {
+			lookup.set(normalizedSlug, index);
+		}
+
+		if (!lookup.has(basename)) {
+			lookup.set(basename, index);
+		}
+	});
+
+	return lookup;
+}
+
+function getPostOrderIndex(
+	postId: string,
+	postOrderLookup: Map<string, number>,
+): number | null {
+	const normalizedPostId = normalizeSlug(postId);
+	const basename = normalizedPostId.split("/").pop() ?? normalizedPostId;
+
+	return (
+		postOrderLookup.get(normalizedPostId) ??
+		postOrderLookup.get(basename) ??
+		null
+	);
+}
+
 export function sortTopicPosts<
 	T extends { id: string; data: { published: Date } },
 >(topicId: string, posts: T[]): T[] {
-	if (topicId !== "practice-exercises") {
+	const postOrder =
+		topicDefinitions.find((topic) => topic.id === topicId)?.postOrder ?? [];
+
+	if (postOrder.length === 0 && topicId !== "practice-exercises") {
 		return posts;
 	}
 
+	const postOrderLookup = createPostOrderLookup(postOrder);
+
 	return [...posts].sort((a, b) => {
+		const orderA = getPostOrderIndex(a.id, postOrderLookup);
+		const orderB = getPostOrderIndex(b.id, postOrderLookup);
+
+		if (orderA !== null && orderB !== null && orderA !== orderB) {
+			return orderA - orderB;
+		}
+
+		if (orderA !== null) {
+			return -1;
+		}
+
+		if (orderB !== null) {
+			return 1;
+		}
+
 		const quizOrderA = getQuizSequence(a.id);
 		const quizOrderB = getQuizSequence(b.id);
 
-		if (quizOrderA !== null && quizOrderB !== null && quizOrderA !== quizOrderB) {
+		if (
+			quizOrderA !== null &&
+			quizOrderB !== null &&
+			quizOrderA !== quizOrderB
+		) {
 			return quizOrderA - quizOrderB;
 		}
 
@@ -65,6 +123,7 @@ export const topicDefinitions: TopicDefinition[] = [
 		description: "整理这个博客从配置、部署到使用过程中的相关文章。",
 		cover: "/assets/desktop-banner/2.webp",
 		visibility: "public",
+		postOrder: ["mizuki-guide", "edgeone-pages-deploy"],
 		postMatchers: [
 			{
 				tags: ["Mizuki", "Astro", "EdgeOne"],
@@ -79,6 +138,18 @@ export const topicDefinitions: TopicDefinition[] = [
 		description: "整理后端职责、研发流程、质量控制与工程基本功相关内容。",
 		cover: "/assets/desktop-banner/6.webp",
 		visibility: "topic-only",
+		postOrder: [
+			"java-backend-work-responsibilities-and-rd-process",
+			"backend-application-setup",
+			"联调测试",
+			"微服务",
+			"消息队列",
+			"分库分表",
+			"分布式事务",
+			"ai-rd-process",
+			"claude-code-coding-practice",
+			"前端开发实战：从框架基础到AI驱动",
+		],
 		postMatchers: [
 			{
 				pathPrefixes: ["engineering-foundation"],
@@ -88,9 +159,18 @@ export const topicDefinitions: TopicDefinition[] = [
 	{
 		id: "ai-empowerment",
 		title: "AI赋能",
-		description: "整理大模型、Prompt、RAG、Agent 与 AI 工程化实践相关内容。",
+		description:
+			"整理大模型、Prompt、RAG、Agent 与 AI 工程化实践相关内容。",
 		cover: "/assets/desktop-banner/7.webp",
 		visibility: "topic-only",
+		postOrder: [
+			"大模型基础",
+			"AI认知与Prompt",
+			"Prompt提示词工程",
+			"RAG",
+			"AI Agent开发实战",
+			"VibeCoding与工程化实战",
+		],
 		postMatchers: [
 			{
 				pathPrefixes: ["ai-empowerment"],
@@ -100,9 +180,17 @@ export const topicDefinitions: TopicDefinition[] = [
 	{
 		id: "fullstack-development",
 		title: "全栈开发",
-		description: "整理前端基础、移动端开发、测试分析与软件质量等全栈学习内容。",
+		description:
+			"整理前端基础、移动端开发、测试分析与软件质量等全栈学习内容。",
 		cover: "/assets/desktop-banner/8.webp",
 		visibility: "topic-only",
+		postOrder: [
+			"TypyScript",
+			"React",
+			"移动端H5开发",
+			"测试分析和用例设计",
+			"软件质量",
+		],
 		postMatchers: [
 			{
 				pathPrefixes: ["fullstack-development"],
@@ -115,6 +203,7 @@ export const topicDefinitions: TopicDefinition[] = [
 		description: "收集和整理头像设计、生活感受与个人表达相关文字。",
 		cover: "/assets/desktop-banner/4.webp",
 		visibility: "public",
+		postOrder: ["logo-story", "Somthing for nothing"],
 		postMatchers: [
 			{
 				tags: ["LOGO", "Sakura"],
@@ -137,10 +226,20 @@ export const topicDefinitions: TopicDefinition[] = [
 	},
 	{
 		id: "bitstream-summer",
-		title: "比特流夏日",
-		description: "整理 Git、协作流程与工程实践中的高频基础操作，沉淀成适合复习和快速查阅的专题。",
+		title: "Bitstream Summer",
+		description:
+			"整理 Git、协作流程与工程实践中的高频基础操作，沉淀成适合复习和快速查阅的专题。",
 		cover: "/assets/desktop-banner/10.webp",
 		visibility: "public",
+		postOrder: [
+			"Git 基础配置与协作常用命令",
+			"Web前端基础",
+			"React",
+			"React Router",
+			"Java基础",
+			"Mysql与JDBC",
+			"Spring 与 Spring Boot",
+		],
 		postMatchers: [
 			{
 				pathPrefixes: ["bitstream-summer"],
@@ -192,7 +291,8 @@ function matchesTopic(
 			matcher.slugs?.some((slug) => {
 				const normalizedSlug = normalizeSlug(slug);
 				return (
-					normalizedSlug === postSlug || normalizedSlug === postBasename
+					normalizedSlug === postSlug ||
+					normalizedSlug === postBasename
 				);
 			}) ?? false;
 		const hasTagMatch =
@@ -224,7 +324,9 @@ export function getMatchedTopicsForPost(
 export function getPostVisibilityMode(
 	post: TopicMatchCandidate | PostForList,
 ): TopicVisibilityMode {
-	const matchedTopics = getMatchedTopicsForPost(post, { includeHidden: true });
+	const matchedTopics = getMatchedTopicsForPost(post, {
+		includeHidden: true,
+	});
 
 	if (matchedTopics.some((topic) => getTopicVisibility(topic) === "hidden")) {
 		return "hidden";
@@ -244,7 +346,9 @@ export function getPostVisibilityMode(
 export function getPrimaryTopicIdForPost(
 	post: TopicMatchCandidate | PostForList,
 ): string | null {
-	const matchedTopics = getMatchedTopicsForPost(post, { includeHidden: true });
+	const matchedTopics = getMatchedTopicsForPost(post, {
+		includeHidden: true,
+	});
 	const restrictedTopic = matchedTopics.find((topic) => {
 		const visibility = getTopicVisibility(topic);
 		return visibility === "topic-only" || visibility === "hidden";
