@@ -239,6 +239,8 @@ export const topicDefinitions: TopicDefinition[] = [
 			"Java基础",
 			"Mysql与JDBC",
 			"Spring 与 Spring Boot",
+			"如何从零到一Vibe Coding一个项目，并且长期维护",
+			"SKILLS",
 		],
 		postMatchers: [
 			{

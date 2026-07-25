@@ -803,6 +803,35 @@ let name = '张三';
 | 重复声明 | 允许 | 不允许 | 不允许 |
 | 重新赋值 | 可以 | 可以 | 不可以 |
 
+#### 常见写法与 JS 报错
+
+下面这些情况很容易混淆，可以放在一起记：
+
+```js
+// 合法：let 可以重新赋值
+let name = '张三';
+name = 123;
+console.log(name); // 123
+```
+
+这段在 JavaScript 中是合法的，因为 JS 是动态类型语言，变量重新赋值后可以变成别的类型。
+
+```js
+// 报错：const 不能重新赋值
+const name = '张三';
+name = 123; // TypeError: Assignment to constant variable.
+```
+
+这属于 JavaScript 运行时错误，因为 `const` 声明的变量不能再次赋值。
+
+```js
+// 报错：let 不能在同一作用域内重复声明
+let name = '张三';
+let name = 123; // SyntaxError: Identifier 'name' has already been declared
+```
+
+这属于 JavaScript 语法错误，代码在执行前就会报错。
+
 #### 使用建议
 
 - 默认优先使用 `const`
@@ -918,6 +947,18 @@ const hasEven = numbers.some(n => n % 2 === 0);
 const allPositive = numbers.every(n => n > 0);
 ```
 
+这两个方法都会遍历数组，并根据条件返回布尔值：
+
+- `some()`：只要有一个元素满足条件，就返回 `true`
+- `every()`：只有所有元素都满足条件，才返回 `true`
+
+上面这段代码中：
+
+- `n % 2 === 0` 表示判断当前数字是否能被 `2` 整除
+- 数组里有 `2` 和 `4` 满足条件，所以 `hasEven` 的结果是 `true`
+- `n > 0` 表示判断当前数字是否大于 `0`
+- `[1, 2, 3, 4, 5]` 中所有元素都大于 `0`，所以 `allPositive` 的结果是 `true`
+
 #### `reduce()`
 
 适合做求和、统计、归并。
@@ -926,6 +967,24 @@ const allPositive = numbers.every(n => n > 0);
 const numbers = [1, 2, 3, 4, 5];
 const sum = numbers.reduce((acc, num) => acc + num, 0);
 ```
+
+`reduce()` 的作用是把数组中的多个值“归并”为一个结果。
+
+- `acc` 是累加器，用来保存每一步计算后的结果
+- `num` 是当前遍历到的元素
+- 最后的 `0` 是初始值
+
+执行过程可以理解为：
+
+```js
+0 + 1 = 1
+1 + 2 = 3
+3 + 3 = 6
+6 + 4 = 10
+10 + 5 = 15
+```
+
+所以 `sum` 的最终结果是 `15`。
 
 ### 6. 解构赋值
 
@@ -938,6 +997,18 @@ const { name, age } = person;
 const { name: userName } = person;
 const { country = '中国' } = person;
 ```
+
+对象解构的本质是：从对象中快速取出属性，并直接赋值给变量。
+
+- `const { name, age } = person;`
+  表示从 `person` 中取出 `name` 和 `age`
+  此时 `name === '张三'`，`age === 25`
+- `const { name: userName } = person;`
+  表示把 `person.name` 取出来，并重命名为 `userName`
+  此时 `userName === '张三'`
+- `const { country = '中国' } = person;`
+  表示如果对象中没有 `country`，就使用默认值 `'中国'`
+  此时 `country === '中国'`
 
 优点：
 
