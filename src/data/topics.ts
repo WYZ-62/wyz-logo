@@ -228,7 +228,7 @@ export const topicDefinitions: TopicDefinition[] = [
 		id: "bitstream-summer",
 		title: "Bitstream Summer",
 		description:
-			"整理 Git、协作流程与工程实践中的高频基础操作，沉淀成适合复习和快速查阅的专题。",
+			"整理前后端基础、数据存储与中间件、软件质量及 AI 工程实践，沉淀成适合复习和快速查阅的专题。",
 		cover: "/assets/desktop-banner/10.webp",
 		visibility: "public",
 		postOrder: [
@@ -239,7 +239,11 @@ export const topicDefinitions: TopicDefinition[] = [
 			"Java基础",
 			"Mysql与JDBC",
 			"Spring 与 Spring Boot",
+			"Mybatis和SpringBoot",
+			"Redis和RocketMQ",
+			"软件质量-测试基础到工程化落地",
 			"如何从零到一Vibe Coding一个项目，并且长期维护",
+			"Agent",
 			"SKILLS",
 		],
 		postMatchers: [
